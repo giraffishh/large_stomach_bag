@@ -41,7 +41,7 @@ const displayAddress = computed(() => {
 <template>
   <div 
     @click="goToDetail"
-    class="group bg-white dark:bg-zinc-900 rounded-xl md:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-zinc-100 dark:border-zinc-800 flex flex-row h-24 md:h-48"
+    class="group bg-white dark:bg-zinc-900 rounded-xl md:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-zinc-100 dark:border-zinc-800 flex flex-row h-26 md:h-48"
     v-motion
     :initial="{ opacity: 0, y: 20 }"
     :enter="{ opacity: 1, y: 0 }"
@@ -56,13 +56,13 @@ const displayAddress = computed(() => {
     </div>
 
     <!-- Content -->
-    <div class="pt-1.5 px-3 pb-3 md:p-6 flex flex-col justify-between grow min-w-0">
-      <div>
-        <div class="flex justify-between items-start mb-0.5 md:mb-2">
-          <h3 class="text-sm md:text-lg font-bold text-zinc-900 dark:text-zinc-100 line-clamp-1">{{ restaurant.name }}</h3>
+    <div class="pt-1.5 px-3 pb-1.5 md:p-6 flex flex-col justify-between grow min-w-0">
+      <div class="flex flex-col space-y-0.5 md:space-y-0">
+        <div class="flex justify-between items-start md:mb-2">
+          <h3 class="text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-100 line-clamp-1">{{ restaurant.name }}</h3>
         </div>
 
-        <div class="flex items-center gap-1 text-zinc-500 text-[10px] md:text-sm mb-1 md:mb-3">
+        <div class="flex items-center gap-1 text-zinc-500 text-xs md:text-sm md:mb-3">
           <MapPin :size="10" class="md:hidden" />
           <MapPin :size="14" class="hidden md:block" />
           <span class="line-clamp-1">{{ displayAddress }}</span>
@@ -72,17 +72,17 @@ const displayAddress = computed(() => {
           <span 
             v-for="tag in restaurant.tags.slice(0, 3)" 
             :key="tag"
-            class="px-1 py-0.5 md:px-2 md:py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[9px] md:text-xs rounded md:rounded-md"
+            class="px-1 py-0.5 md:px-2 md:py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] md:text-xs rounded md:rounded-md"
           >
             #{{ tag }}
           </span>
         </div>
       </div>
 
-      <div class="flex items-center justify-between mt-1 pt-0.5 md:mt-2 md:pt-3 border-t border-zinc-100 dark:border-zinc-800">
+      <div class="flex items-center justify-between mt-1 pt-0 md:mt-2 md:pt-3 border-t border-zinc-100 dark:border-zinc-800">
         <div class="flex items-center gap-2 md:gap-3">
-          <div class="text-[10px] md:text-sm font-medium text-zinc-900 dark:text-zinc-200">
-            ¥{{ restaurant.price }} <span class="text-zinc-400 text-[8px] md:text-xs font-normal">/人</span>
+          <div class="text-xs md:text-sm font-medium text-zinc-900 dark:text-zinc-200">
+            ¥{{ restaurant.price }} <span class="text-zinc-400 text-[9px] md:text-xs font-normal">/人</span>
           </div>
           <RatingBadge :rating="restaurant.rating" class="scale-75 origin-left md:scale-100" />
         </div>
