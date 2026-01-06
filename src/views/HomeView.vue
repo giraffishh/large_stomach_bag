@@ -37,7 +37,7 @@ onClickOutside(ratingDropdownRef, () => {
 const ratingLabel = computed(() => {
   const count = selectedRatings.value.length
   if (count === 0) return '评价'
-  if (count <= 2) return selectedRatings.value.join(' ')
+  if (count <= 4) return selectedRatings.value.join(' ')
   return '评价'
 })
 
@@ -162,7 +162,7 @@ const applyCustomPrice = () => {
           <div ref="ratingDropdownRef" class="md:hidden relative mr-1.5">
             <button 
               @click="showRatingDropdown = !showRatingDropdown; showTagsDropdown = false; showPriceDropdown = false"
-              class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all shadow-sm max-w-[120px]"
+              class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all shadow-sm max-w-[180px]"
               :class="selectedRatings.length > 0 || showRatingDropdown ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'"
             >
               <!-- Star icon for Rating -->
@@ -170,7 +170,7 @@ const applyCustomPrice = () => {
               <span class="truncate block">
                 {{ ratingLabel }}
               </span>
-              <span v-if="selectedRatings.length > 2" class="flex items-center justify-center bg-white text-black dark:bg-black dark:text-white rounded-full w-4 h-4 text-[10px] shrink-0">
+              <span v-if="selectedRatings.length > 4" class="flex items-center justify-center bg-white text-black dark:bg-black dark:text-white rounded-full w-4 h-4 text-[10px] shrink-0">
                 {{ selectedRatings.length }}
               </span>
               <ChevronDown :size="12" class="transition-transform duration-300 shrink-0" :class="{ 'rotate-180': showRatingDropdown }" />

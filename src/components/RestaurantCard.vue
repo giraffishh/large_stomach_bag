@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useRestaurantStore } from '@/stores/restaurants'
+import type { Restaurant } from '@/stores/restaurants'
 import RatingBadge from './RatingBadge.vue'
 import { MapPin, ArrowRight } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  restaurant: any
+  restaurant: Restaurant
 }>()
 
 const router = useRouter()
