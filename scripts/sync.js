@@ -4,12 +4,23 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
+import { Octokit } from "@octokit/rest";
+import sharp from "sharp";
 
 // Load environment variables
 dotenv.config();
 
 const notion = new Client({ auth: process.env.NOTION_KEY });
 const databaseId = process.env.NOTION_DB_ID;
+
+const octokit = process.env.GITHUB_TOKEN 
+  ? new Octokit({ auth: process.env.GITHUB_TOKEN }) 
+  : null;
+const GITHUB_OWNER = "giraffishh";
+const GITHUB_REPO = "image-hosting";
+const GITHUB_PATH_PREFIX = "food";
+// User explicitly requested 'giraffish' (one h) in the mirror URL
+const CDN_PREFIX = `https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/${GITHUB_PATH_PREFIX}`;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,7 +83,61 @@ function getPlainText(richTextArray) {
   return richTextArray.map((t) => t.plain_text).join("");
 }
 
-function simplifyPage(page) {
+async function processAndUploadImage(imageUrl, pageId) {
+  if (!octokit) {
+    console.warn("Skipping image upload: GITHUB_TOKEN not found.");
+    return null;
+  }
+
+  const filename = `${pageId}.webp`;
+  const filePath = `${GITHUB_PATH_PREFIX}/${filename}`;
+
+  // Check if file already exists on GitHub to avoid re-uploading
+  try {
+    await octokit.repos.getContent({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      path: filePath,
+    });
+    console.log(`File ${filename} already exists on GitHub. Skipping upload.`);
+    return `${CDN_PREFIX}/${filename}`;
+  } catch (e) {
+    // File doesn't exist (404), proceed to upload
+  }
+
+  try {
+    console.log(`Downloading image for page ${pageId}...`);
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    console.log(`Processing image for page ${pageId}...`);
+    const processedBuffer = await sharp(buffer)
+      .resize(1080, 1080, { fit: 'inside', withoutEnlargement: true }) // Fit within 1080x1080, preserving aspect ratio
+      .webp({ quality: 80 , effort: 6})
+      .toBuffer();
+
+    const contentEncoded = processedBuffer.toString('base64');
+
+    console.log(`Uploading ${filename} to GitHub...`);
+    await octokit.repos.createOrUpdateFileContents({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      path: filePath,
+      message: `Upload ${filename} via sync script`,
+      content: contentEncoded,
+      branch: 'main',
+    });
+
+    return `${CDN_PREFIX}/${filename}`;
+  } catch (error) {
+    console.error(`Error processing image for page ${pageId}:`, error);
+    return null;
+  }
+}
+
+async function simplifyPage(page) {
   const props = page.properties;
   
   // Name (Title)
@@ -90,7 +155,35 @@ function simplifyPage(page) {
   }
 
   // CoverURL (Link)
-  const coverUrl = props.CoverURL?.url || "";
+  let coverUrl = props.CoverURL?.url || "";
+
+  // Process image if needed:
+  // 1. We have a Notion-hosted cover image (which expires)
+  // 2. We don't have a permanent CoverURL OR the current CoverURL doesn't match our new CDN prefix
+  if (cover && (!coverUrl || !coverUrl.startsWith(CDN_PREFIX))) {
+      // Double check it is a Notion file (expiry present) or just process it anyway if missing coverUrl
+      // Usually Notion internal files have expiration.
+      
+      const newUrl = await processAndUploadImage(cover, page.id);
+      if (newUrl) {
+          coverUrl = newUrl;
+          
+          // Write back to Notion
+          try {
+              console.log(`Updating Notion page ${page.id} with new CoverURL...`);
+              await notion.pages.update({
+                  page_id: page.id,
+                  properties: {
+                      CoverURL: {
+                          url: newUrl
+                      }
+                  }
+              });
+          } catch (err) {
+              console.error(`Failed to update Notion page ${page.id}:`, err);
+          }
+      }
+  }
 
   // Tags (Multi-select)
   const tags = props.Tags?.multi_select ? props.Tags.multi_select.map(t => t.name) : [];
@@ -111,7 +204,7 @@ function simplifyPage(page) {
     id: page.id,
     name,
     cover,
-    coverUrl,
+    coverUrl, // This will be the new CDN URL if updated
     tags,
     rating,
     address,
@@ -131,7 +224,12 @@ async function main() {
   const pages = await fetchAllPages();
   console.log(`Found ${pages.length} pages.`);
 
-  const simplifiedData = pages.map(simplifyPage);
+  // Process sequentially to avoid rate limits or overwhelming logs
+  const simplifiedData = [];
+  for (const page of pages) {
+      const simplified = await simplifyPage(page);
+      simplifiedData.push(simplified);
+  }
 
   const outputDir = path.dirname(OUTPUT_PATH);
   if (!fs.existsSync(outputDir)){
