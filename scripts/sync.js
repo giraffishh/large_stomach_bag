@@ -83,39 +83,31 @@ function getPlainText(richTextArray) {
   return richTextArray.map((t) => t.plain_text).join("");
 }
 
-async function processAndUploadImage(imageUrl, pageId) {
+async function processAndUploadImage(imageUrl) {
   if (!octokit) {
     console.warn("Skipping image upload: GITHUB_TOKEN not found.");
     return null;
   }
 
-  const filename = `${pageId}.webp`;
-  const filePath = `${GITHUB_PATH_PREFIX}/${filename}`;
-
-  // Check if file already exists on GitHub to avoid re-uploading
   try {
-    await octokit.repos.getContent({
-      owner: GITHUB_OWNER,
-      repo: GITHUB_REPO,
-      path: filePath,
-    });
-    console.log(`File ${filename} already exists on GitHub. Skipping upload.`);
-    return `${CDN_PREFIX}/${filename}`;
-  } catch (e) {
-    // File doesn't exist (404), proceed to upload
-  }
+    // Generate timestamp-based filename: YYYYMMDD_HHmmss_XXXX.webp
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14); // YYYYMMDDHHmmss
+    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const filename = `${timestamp}_${randomSuffix}.webp`;
+    const filePath = `${GITHUB_PATH_PREFIX}/${filename}`;
 
-  try {
-    console.log(`Downloading image for page ${pageId}...`);
+    console.log(`Downloading image...`);
     const response = await fetch(imageUrl);
     if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    console.log(`Processing image for page ${pageId}...`);
+    console.log(`Processing image (rotate & resize)...`);
     const processedBuffer = await sharp(buffer)
-      .resize(1080, 1080, { fit: 'inside', withoutEnlargement: true }) // Fit within 1080x1080, preserving aspect ratio
-      .webp({ quality: 80 , effort: 6})
+      .rotate() // Auto-rotate based on EXIF data
+      .resize(1080, 1080, { fit: 'inside', withoutEnlargement: true }) // Max 1080p, preserve aspect ratio
+      .webp({ quality: 80 })
       .toBuffer();
 
     const contentEncoded = processedBuffer.toString('base64');
@@ -132,7 +124,7 @@ async function processAndUploadImage(imageUrl, pageId) {
 
     return `${CDN_PREFIX}/${filename}`;
   } catch (error) {
-    console.error(`Error processing image for page ${pageId}:`, error);
+    console.error(`Error processing image:`, error);
     return null;
   }
 }
@@ -157,14 +149,14 @@ async function simplifyPage(page) {
   // CoverURL (Link)
   let coverUrl = props.CoverURL?.url || "";
 
-  // Process image if needed:
-  // 1. We have a Notion-hosted cover image (which expires)
-  // 2. We don't have a permanent CoverURL OR the current CoverURL doesn't match our new CDN prefix
-  if (cover && (!coverUrl || !coverUrl.startsWith(CDN_PREFIX))) {
-      // Double check it is a Notion file (expiry present) or just process it anyway if missing coverUrl
-      // Usually Notion internal files have expiration.
+  // Logic: 
+  // 1. Must have a Cover image source.
+  // 2. CoverURL field must be EMPTY. If it has any content, we skip.
+  if (cover && !coverUrl) {
+      console.log(`Processing page ${page.id}: Found Cover but no CoverURL. Uploading...`);
       
-      const newUrl = await processAndUploadImage(cover, page.id);
+      const newUrl = await processAndUploadImage(cover);
+      
       if (newUrl) {
           coverUrl = newUrl;
           
@@ -200,11 +192,16 @@ async function simplifyPage(page) {
   // Price (Num)
   const price = props.Price?.number || 0;
 
+  // Security & Cleanup: 
+  // If we have a permanent coverUrl, remove the temporary notion cover link 
+  // to avoid GitHub secret scanning warnings.
+  const finalCover = coverUrl ? "" : cover;
+
   return {
     id: page.id,
     name,
-    cover,
-    coverUrl, // This will be the new CDN URL if updated
+    cover: finalCover,
+    coverUrl,
     tags,
     rating,
     address,
