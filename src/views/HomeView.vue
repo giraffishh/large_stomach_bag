@@ -9,10 +9,18 @@ import { ref, computed, onMounted } from 'vue'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
-const isMapView = ref(false)
 
 const store = useRestaurantStore()
-const { searchQuery, selectedTags, selectedRatings, priceRanges, allTags, filteredRestaurants, sortBy } = storeToRefs(store)
+const {
+  searchQuery,
+  selectedTags,
+  selectedRatings,
+  priceRanges,
+  allTags,
+  filteredRestaurants,
+  sortBy,
+  isMapView,
+} = storeToRefs(store)
 
 onMounted(() => {
   if (navigator.geolocation) {
@@ -23,7 +31,7 @@ onMounted(() => {
       (err) => {
         console.warn('Geolocation error:', err)
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
     )
   }
 })
@@ -44,7 +52,6 @@ const sortOptions = [
   { label: '价格最高', value: 'price_desc' },
 ] as const
 
-
 // Filter Menu State
 const showFilterMenu = ref(false)
 const filterMenuRef = ref(null)
@@ -63,17 +70,19 @@ onClickOutside(sortMenuRef, () => {
 })
 
 const selectedSortLabel = computed(() => {
-  return sortOptions.find(o => o.value === sortBy.value)?.label || '排序'
+  return sortOptions.find((o) => o.value === sortBy.value)?.label || '排序'
 })
 
 const filteredTags = computed(() => {
   if (!tagSearchQuery.value) return allTags.value
-  return allTags.value.filter(tag => tag.toLowerCase().includes(tagSearchQuery.value.toLowerCase()))
+  return allTags.value.filter((tag) =>
+    tag.toLowerCase().includes(tagSearchQuery.value.toLowerCase()),
+  )
 })
 
 const toggleTag = (tag: string) => {
   if (selectedTags.value.includes(tag)) {
-    selectedTags.value = selectedTags.value.filter(t => t !== tag)
+    selectedTags.value = selectedTags.value.filter((t) => t !== tag)
   } else {
     selectedTags.value.push(tag)
   }
@@ -81,14 +90,14 @@ const toggleTag = (tag: string) => {
 
 const toggleRating = (rating: string) => {
   if (selectedRatings.value.includes(rating)) {
-    selectedRatings.value = selectedRatings.value.filter(r => r !== rating)
+    selectedRatings.value = selectedRatings.value.filter((r) => r !== rating)
   } else {
     selectedRatings.value.push(rating)
   }
 }
 
 const togglePriceRange = (range: { min: number; max: number }) => {
-  const index = priceRanges.value.findIndex(r => r.min === range.min && r.max === range.max)
+  const index = priceRanges.value.findIndex((r) => r.min === range.min && r.max === range.max)
   if (index !== -1) {
     priceRanges.value.splice(index, 1)
   } else {
@@ -99,14 +108,16 @@ const togglePriceRange = (range: { min: number; max: number }) => {
 const applyCustomPrice = () => {
   const min = parseInt(customMin.value)
   const max = parseInt(customMax.value)
-  
+
   if (isNaN(min) && isNaN(max)) return
 
   // Custom price clears presets and sets a single specific range
-  priceRanges.value = [{ 
-    min: isNaN(min) ? 0 : min, 
-    max: isNaN(max) ? 99999 : max 
-  }]
+  priceRanges.value = [
+    {
+      min: isNaN(min) ? 0 : min,
+      max: isNaN(max) ? 99999 : max,
+    },
+  ]
 }
 
 const clearAllFilters = () => {
@@ -118,28 +129,35 @@ const clearAllFilters = () => {
 }
 
 const allSelectedFilters = computed(() => {
-  const filters: { type: 'rating' | 'price' | 'tag', value: string | { min: number; max: number }, label: string }[] = []
-  
-  selectedRatings.value.forEach(rating => {
+  const filters: {
+    type: 'rating' | 'price' | 'tag'
+    value: string | { min: number; max: number }
+    label: string
+  }[] = []
+
+  selectedRatings.value.forEach((rating) => {
     filters.push({ type: 'rating', value: rating, label: rating })
   })
-  
-  priceRanges.value.forEach(range => {
-    filters.push({ 
-      type: 'price', 
-      value: range, 
-      label: `¥${range.min}-${range.max >= 99999 ? '∞' : range.max}` 
+
+  priceRanges.value.forEach((range) => {
+    filters.push({
+      type: 'price',
+      value: range,
+      label: `¥${range.min}-${range.max >= 99999 ? '∞' : range.max}`,
     })
   })
-  
-  selectedTags.value.forEach(tag => {
+
+  selectedTags.value.forEach((tag) => {
     filters.push({ type: 'tag', value: tag, label: `#${tag}` })
   })
-  
+
   return filters
 })
 
-const removeFilter = (filter: { type: 'rating' | 'price' | 'tag', value: string | { min: number; max: number } }) => {
+const removeFilter = (filter: {
+  type: 'rating' | 'price' | 'tag'
+  value: string | { min: number; max: number }
+}) => {
   if (filter.type === 'rating') {
     toggleRating(filter.value as string)
   } else if (filter.type === 'price') {
@@ -151,7 +169,10 @@ const removeFilter = (filter: { type: 'rating' | 'price' | 'tag', value: string 
 </script>
 
 <template>
-  <main class="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-20 transition-colors duration-300">
+  <main
+    class="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300"
+    :class="[isMapView ? '' : 'pb-20']"
+  >
     <header
       class="sticky top-0 z-30 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800"
     >
@@ -384,28 +405,32 @@ const removeFilter = (filter: { type: 'rating' | 'price' | 'tag', value: string 
           </div>
 
           <!-- Selected Filters Chips (Horizontal Scroll) -->
-          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar ml-2 mask-linear-fade grow">
-             <div v-for="(filter, idx) in allSelectedFilters.slice(0, 2)" :key="idx" 
-               class="flex items-center gap-1 px-2 py-1 rounded-md text-xs whitespace-nowrap border shrink-0"
-               :class="[
-                 filter.type === 'tag' 
-                   ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
-                   : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'
-               ]"
-             >
-                <span>{{ filter.label }}</span>
-                <button 
-                  @click="removeFilter(filter)" 
-                  class="hover:text-red-500"
-                >
-                  <X :size="12" />
-                </button>
-             </div>
-             <div v-if="allSelectedFilters.length > 2" class="px-2 py-1 rounded-md bg-zinc-100/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs text-zinc-400 whitespace-nowrap">
-                ...
-             </div>
+          <div
+            class="flex items-center gap-2 overflow-x-auto no-scrollbar ml-2 mask-linear-fade grow"
+          >
+            <div
+              v-for="(filter, idx) in allSelectedFilters.slice(0, 2)"
+              :key="idx"
+              class="flex items-center gap-1 px-2 py-1 rounded-md text-xs whitespace-nowrap border shrink-0"
+              :class="[
+                filter.type === 'tag'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
+                  : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300',
+              ]"
+            >
+              <span>{{ filter.label }}</span>
+              <button @click="removeFilter(filter)" class="hover:text-red-500">
+                <X :size="12" />
+              </button>
+            </div>
+            <div
+              v-if="allSelectedFilters.length > 2"
+              class="px-2 py-1 rounded-md bg-zinc-100/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 text-xs text-zinc-400 whitespace-nowrap"
+            >
+              ...
+            </div>
           </div>
-          
+
           <!-- Sort Dropdown -->
           <div ref="sortMenuRef" class="relative shrink-0 ml-2">
             <button
@@ -424,7 +449,9 @@ const removeFilter = (filter: { type: 'rating' | 'price' | 'tag', value: string 
                   <button
                     @click="sortBy = option.value; showSortMenu = false"
                     class="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
-                    :class="{ 'font-bold text-indigo-600 dark:text-indigo-400': sortBy === option.value }"
+                    :class="{
+                      'font-bold text-indigo-600 dark:text-indigo-400': sortBy === option.value,
+                    }"
                   >
                     <span>{{ option.label }}</span>
                     <Check v-if="sortBy === option.value" :size="16" />
@@ -437,8 +464,14 @@ const removeFilter = (filter: { type: 'rating' | 'price' | 'tag', value: string 
       </div>
     </header>
 
-    <section class="max-w-4xl mx-auto px-4 space-y-4 pt-4">
-      <div v-if="isMapView">
+    <section
+      :class="[
+        isMapView
+          ? 'w-full md:max-w-4xl md:mx-auto md:px-4 md:pt-4'
+          : 'max-w-4xl mx-auto px-4 space-y-4 pt-4',
+      ]"
+    >
+      <div v-if="isMapView" class="w-full">
         <RestaurantMap />
       </div>
       <div v-else class="space-y-4">

@@ -4,7 +4,8 @@ import { useRouter } from 'vue-router'
 import AMapLoader from '@amap/amap-jsapi-loader'
 import { useIdle, useDark } from '@vueuse/core'
 import { Locate } from 'lucide-vue-next'
-import { useRestaurantStore } from '@/stores/restaurants'
+import { useRestaurantStore, type Restaurant } from '@/stores/restaurants'
+import RestaurantCard from '@/components/RestaurantCard.vue'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const map = shallowRef<any>(null)
@@ -14,6 +15,8 @@ const mapContainer = ref<HTMLElement | null>(null)
 const timer = ref<ReturnType<typeof setInterval> | null>(null)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const userPosition = ref<any>(null)
+const selectedRestaurant = ref<Restaurant | null>(null)
+const isCardInteractable = ref(false)
 
 const router = useRouter()
 const restaurantStore = useRestaurantStore()
@@ -25,12 +28,112 @@ const darkStyle = 'amap://styles/blue'
 // Detect user inactivity (5 minutes = 300000 ms)
 const { idle } = useIdle(5 * 60 * 1000)
 
+// Swipe to dismiss logic
+const touchStartY = ref(0)
+const cardTranslateY = ref(0)
+const isDragging = ref(false)
+
+const handleTouchStart = (e: TouchEvent) => {
+  if (e.touches.length > 0) {
+    touchStartY.value = e.touches[0]!.clientY
+    isDragging.value = true
+  }
+}
+
+const handleTouchMove = (e: TouchEvent) => {
+  if (!isDragging.value || e.touches.length === 0) return
+  const currentY = e.touches[0]!.clientY
+  const deltaY = currentY - touchStartY.value
+
+  // Allow both upward and downward dragging
+  if (e.cancelable) e.preventDefault()
+  cardTranslateY.value = deltaY
+}
+
+const handleTouchEnd = () => {
+  isDragging.value = false
+
+  if (cardTranslateY.value > 40) {
+    // Swipe down to dismiss (higher sensitivity)
+    selectedRestaurant.value = null
+  } else if (cardTranslateY.value < -120 && selectedRestaurant.value) {
+    // Swipe up to view details (lower sensitivity)
+    router.push({ name: 'detail', params: { id: selectedRestaurant.value.id } })
+  }
+
+  // Reset position (animation will handle the snap back)
+  cardTranslateY.value = 0
+}
+
+const handleMobileCardClick = (e: Event) => {
+  if (!isCardInteractable.value) {
+    e.stopPropagation()
+    e.preventDefault()
+  }
+}
+
+// Animation frame ID for cancellation
+let animationFrameId: number | null = null
+
+// Smooth Pan & Zoom Animation Helper for 2D Map
+const smoothFlyTo = (
+  targetLng: number,
+  targetLat: number,
+  targetZoom?: number,
+  duration: number = 400,
+) => {
+  if (!map.value) return
+
+  // Cancel any existing animation
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+
+  const startCenter = map.value.getCenter()
+  const startLng = startCenter.lng
+  const startLat = startCenter.lat
+  const startZoom = map.value.getZoom()
+
+  // Only zoom in, never zoom out automatically
+  const endZoom = targetZoom !== undefined ? Math.max(startZoom, targetZoom) : startZoom
+
+  const startTime = performance.now()
+
+  const animate = (currentTime: number) => {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+
+    // Easing function: easeOutCubic
+    const ease = 1 - Math.pow(1 - progress, 3)
+
+    const currentLng = startLng + (targetLng - startLng) * ease
+    const currentLat = startLat + (targetLat - startLat) * ease
+    const currentZoom = startZoom + (endZoom - startZoom) * ease
+
+    map.value.setCenter([currentLng, currentLat])
+    map.value.setZoom(currentZoom)
+
+    if (progress < 1) {
+      animationFrameId = requestAnimationFrame(animate)
+    } else {
+      animationFrameId = null
+    }
+  }
+
+  animationFrameId = requestAnimationFrame(animate)
+}
+
 // Function to manually center map on user
 const centerOnUser = () => {
   if (userPosition.value && map.value) {
-    // Use panTo for smooth animation instead of setZoomAndCenter
-    map.value.setZoom(15)
-    map.value.panTo(userPosition.value)
+    // Handle AMap.LngLat object (has lng/lat props) or Array
+    const lng = userPosition.value.lng ?? userPosition.value[0]
+    const lat = userPosition.value.lat ?? userPosition.value[1]
+
+    if (lng !== undefined && lat !== undefined) {
+      smoothFlyTo(lng, lat, 15)
+    }
   }
 }
 
@@ -73,18 +176,39 @@ onMounted(() => {
       const baseLayer = AMap.createDefaultLayer()
 
       map.value = new AMap.Map(mapContainer.value, {
-        viewMode: '2D',
-        zoom: 12,
+        viewMode: '2D', // Revert to 2D for Indoor Map support
+        zoom: restaurantStore.mapState ? restaurantStore.mapState.zoom : 12,
+        center: restaurantStore.mapState ? restaurantStore.mapState.center : undefined,
         mapStyle: isDark.value ? darkStyle : lightStyle, // Dynamic initial style
-        showIndoorMap: false, // Hide built-in indoor layer when using custom style
+        showIndoorMap: true, // Enable indoor map
         layers: [indoorMapLayer, baseLayer],
       })
+
+      // Save map state on move/zoom
+      const saveState = () => {
+        if (map.value) {
+          const center = map.value.getCenter()
+          const zoom = map.value.getZoom()
+          restaurantStore.setMapState([center.lng, center.lat], zoom)
+        }
+      }
+      map.value.on('moveend', saveState)
+      map.value.on('zoomend', saveState)
 
       // Watch for dark mode changes
       watch(isDark, (val) => {
         if (map.value) {
           map.value.setMapStyle(val ? darkStyle : lightStyle)
         }
+      })
+
+      // Flag to prevent map click when clicking a marker
+      let ignoreMapClick = false
+
+      // Click on map background closes the card
+      map.value.on('click', () => {
+        if (ignoreMapClick) return
+        selectedRestaurant.value = null
       })
 
       // 1. Add traffic layer
@@ -97,14 +221,19 @@ onMounted(() => {
 
       // Explicitly load MarkerCluster plugin to ensure constructor exists
       AMap.plugin(['AMap.MarkerCluster'], () => {
-        // Initialize Cluster
-        const initCluster = () => {
-          const points = restaurantStore.restaurants
+        // Helper to format points
+        const getClusterPoints = (list: Restaurant[]) => {
+          return list
             .filter((r) => r.latitude && r.longitude)
             .map((r) => ({
               lnglat: [r.longitude, r.latitude],
               ...r,
             }))
+        }
+
+        // Initialize Cluster
+        const initCluster = () => {
+          const points = getClusterPoints(restaurantStore.filteredRestaurants)
 
           // Custom render function for single markers (Restaurant)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,9 +266,25 @@ onMounted(() => {
             context.marker.setOffset(new AMap.Pixel(-12, -24))
             context.marker.setzIndex(100)
 
-            // Bind Click Event
-            context.marker.on('click', () => {
-              router.push({ name: 'detail', params: { id: r.id } })
+            // Bind Click Event - Update State and Pan to Center
+            context.marker.on('click', (e: any) => {
+              // Prevent map click from triggering
+              ignoreMapClick = true
+              setTimeout(() => {
+                ignoreMapClick = false
+              }, 50) // Reduced timeout
+
+              // Pan and Zoom immediately for responsiveness
+              if (map.value) {
+                smoothFlyTo(r.longitude!, r.latitude!, 14)
+              }
+
+              // Temporarily disable card interaction to prevent ghost clicks
+              isCardInteractable.value = false
+              selectedRestaurant.value = r
+              setTimeout(() => {
+                isCardInteractable.value = true
+              }, 400)
             })
           }
 
@@ -164,6 +309,14 @@ onMounted(() => {
             context.marker.setContent(content)
             context.marker.setOffset(new AMap.Pixel(-16, -32)) // Updated offset for 32x32
             context.marker.setzIndex(200)
+
+            // Bind Click Event - Pan to Cluster Center
+            context.marker.on('click', () => {
+              const pos = context.marker.getPosition()
+              if (pos && map.value) {
+                smoothFlyTo(pos.lng, pos.lat)
+              }
+            })
           }
 
           if (AMap.MarkerCluster) {
@@ -179,19 +332,34 @@ onMounted(() => {
 
         // Initialize markers after plugin load
         initCluster()
+
+        // Watch for filter changes and update cluster data
+        watch(
+          () => restaurantStore.filteredRestaurants,
+          (newVal) => {
+            if (cluster.value) {
+              const newPoints = getClusterPoints(newVal)
+              cluster.value.setData(newPoints)
+            }
+          },
+          { deep: true },
+        )
       })
 
       // 2. Geolocation Logic
       // First, get coarse location via IP (CitySearch)
-      const citySearch = new AMap.CitySearch()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      citySearch.getLocalCity((status: string, result: any) => {
-        if (status === 'complete' && result.info === 'OK') {
-          if (result.bounds) {
-            map.value.setBounds(result.bounds)
+      // Only execute if we DON'T have a saved map state
+      if (!restaurantStore.mapState) {
+        const citySearch = new AMap.CitySearch()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        citySearch.getLocalCity((status: string, result: any) => {
+          if (status === 'complete' && result.info === 'OK') {
+            if (result.bounds) {
+              map.value.setBounds(result.bounds)
+            }
           }
-        }
-      })
+        })
+      }
 
       // Prepare Precise Geolocation
       const geolocation = new AMap.Geolocation({
@@ -224,7 +392,10 @@ onMounted(() => {
 
             // Only center on the very first load (keep user-selected zoom)
             if (isFirstLocation) {
-              map.value.setCenter(result.position)
+              // If we have a saved state, don't auto-center, just update isFirstLocation
+              if (!restaurantStore.mapState) {
+                map.value.setCenter(result.position)
+              }
               isFirstLocation = false
             }
           } else {
@@ -278,23 +449,79 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="relative w-full h-[600px] rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700"
-  >
-    <div ref="mapContainer" class="w-full h-full"></div>
-
-    <!-- Custom Geolocation Button -->
-    <button
-      @click="centerOnUser"
-      class="absolute bottom-4 right-4 md:bottom-8 md:right-8 p-2 md:p-3 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors z-50"
-      title="回到我的位置"
+  <div class="flex flex-col gap-4 w-full">
+    <!-- Map Container -->
+    <div
+      class="relative w-full h-[calc(100vh-135px)] md:h-[600px] md:rounded-xl overflow-hidden md:shadow-sm md:border border-zinc-200 dark:border-zinc-700"
     >
-      <Locate class="w-5 h-5 md:w-6 md:h-6" />
-    </button>
+      <div ref="mapContainer" class="w-full h-full"></div>
+
+      <!-- Custom Geolocation Button -->
+      <button
+        @click="centerOnUser"
+        class="absolute bottom-4 right-4 md:bottom-8 md:right-8 p-2 md:p-3 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-300 ease-out z-50"
+        title="回到我的位置"
+        :class="{ '-translate-y-32 md:translate-y-0': selectedRestaurant }"
+      >
+        <Locate class="w-5 h-5 md:w-6 md:h-6" />
+      </button>
+
+      <!-- Mobile Restaurant Card Overlay -->
+      <Transition name="slide-up">
+        <div
+          v-if="selectedRestaurant"
+          class="md:hidden absolute bottom-4 left-4 right-4 z-[60]"
+          :style="{
+            transform: `translateY(${cardTranslateY}px)`,
+            transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+          }"
+          @touchstart="handleTouchStart"
+          @touchmove="handleTouchMove"
+          @touchend="handleTouchEnd"
+          @click.capture="handleMobileCardClick"
+        >
+          <!-- Drag Handle Area -->
+
+          <div class="flex justify-center pb-2" @click.stop>
+            <div
+              class="w-10 h-1 bg-zinc-300/80 dark:bg-zinc-600/80 rounded-full backdrop-blur-sm shadow-sm"
+            ></div>
+          </div>
+
+          <RestaurantCard
+            :restaurant="selectedRestaurant"
+            :auto-height="true"
+            class="shadow-2xl border-zinc-200 dark:border-zinc-700"
+          />
+        </div>
+      </Transition>
+    </div>
+
+    <!-- Desktop Restaurant Card (Below Map) -->
+    <Transition name="slide-up">
+      <div v-if="selectedRestaurant" class="hidden md:block w-full">
+        <RestaurantCard
+          :restaurant="selectedRestaurant"
+          class="shadow-sm border border-zinc-200 dark:border-zinc-700 hover:shadow-md"
+        />
+      </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition:
+    transform 0.3s ease-out,
+    opacity 0.3s ease-out;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
 /* Adjust indoor floor control position and size */
 /* Target the correct class name for AMap v2.0 indoor control */
 :deep(.amap-indoormap-floorbar-control) {

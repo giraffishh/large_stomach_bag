@@ -29,9 +29,15 @@ export const useRestaurantStore = defineStore('restaurants', () => {
   const priceRanges = ref<{ min: number; max: number }[]>([])
   const userLocation = ref<{ lat: number; lng: number } | null>(null)
   const sortBy = ref<'default' | 'distance' | 'rating' | 'price_asc' | 'price_desc'>('default')
+  const isMapView = ref(false)
+  const mapState = ref<{ center: [number, number]; zoom: number } | null>(null)
 
   const setUserLocation = (lat: number, lng: number) => {
     userLocation.value = { lat, lng }
+  }
+
+  const setMapState = (center: [number, number], zoom: number) => {
+    mapState.value = { center, zoom }
   }
 
   const getDistance = (restaurant: Restaurant): string | null => {
@@ -42,7 +48,7 @@ export const useRestaurantStore = defineStore('restaurants', () => {
       userLocation.value.lat,
       userLocation.value.lng,
       restaurant.latitude,
-      restaurant.longitude
+      restaurant.longitude,
     )
     if (dist < 1) {
       return `${Math.round(dist * 1000)}m`
@@ -53,32 +59,34 @@ export const useRestaurantStore = defineStore('restaurants', () => {
   // Extract all unique tags
   const allTags = computed(() => {
     const tags = new Set<string>()
-    restaurants.value.forEach(r => r.tags.forEach(t => tags.add(t)))
+    restaurants.value.forEach((r) => r.tags.forEach((t) => tags.add(t)))
     return Array.from(tags)
   })
 
   const ratingOrder: { [key: string]: number } = {
-  '夯': 4,
-  '人上人': 3,
-  'npc': 2,
-  '拉完了': 1
-}
+    夯: 4,
+    人上人: 3,
+    npc: 2,
+    拉完了: 1,
+  }
 
   const filteredRestaurants = computed(() => {
-    let filtered = restaurants.value.filter(r => {
+    let filtered = restaurants.value.filter((r) => {
       const q = searchQuery.value.toLowerCase()
-      const matchesSearch = r.name.toLowerCase().includes(q) || 
-                            r.review.toLowerCase().includes(q) ||
-                            r.shareLink.toLowerCase().includes(q)
-      
-      const matchesTags = selectedTags.value.length === 0 || 
-                          selectedTags.value.some(tag => r.tags.includes(tag))
-      
-      const matchesRating = selectedRatings.value.length === 0 || 
-                            selectedRatings.value.includes(r.rating)
+      const matchesSearch =
+        r.name.toLowerCase().includes(q) ||
+        r.review.toLowerCase().includes(q) ||
+        r.shareLink.toLowerCase().includes(q)
 
-      const matchesPrice = priceRanges.value.length === 0 || 
-                           priceRanges.value.some(range => r.price >= range.min && r.price <= range.max)
+      const matchesTags =
+        selectedTags.value.length === 0 || selectedTags.value.some((tag) => r.tags.includes(tag))
+
+      const matchesRating =
+        selectedRatings.value.length === 0 || selectedRatings.value.includes(r.rating)
+
+      const matchesPrice =
+        priceRanges.value.length === 0 ||
+        priceRanges.value.some((range) => r.price >= range.min && r.price <= range.max)
 
       return matchesSearch && matchesTags && matchesRating && matchesPrice
     })
@@ -88,8 +96,8 @@ export const useRestaurantStore = defineStore('restaurants', () => {
       case 'default':
         if (selectedTags.value.length > 0) {
           filtered = filtered.sort((a, b) => {
-            const countA = a.tags.filter(t => selectedTags.value.includes(t)).length
-            const countB = b.tags.filter(t => selectedTags.value.includes(t)).length
+            const countA = a.tags.filter((t) => selectedTags.value.includes(t)).length
+            const countB = b.tags.filter((t) => selectedTags.value.includes(t)).length
             if (countA !== countB) return countB - countA
             // Secondary sort by Date (descending)
             const dateA = a.date ? new Date(a.date).getTime() : 0
@@ -110,14 +118,26 @@ export const useRestaurantStore = defineStore('restaurants', () => {
           filtered = filtered.sort((a, b) => {
             if (!a.latitude || !a.longitude) return 1
             if (!b.latitude || !b.longitude) return -1
-            const distA = calculateDistance(userLocation.value!.lat, userLocation.value!.lng, a.latitude, a.longitude)
-            const distB = calculateDistance(userLocation.value!.lat, userLocation.value!.lng, b.latitude, b.longitude)
+            const distA = calculateDistance(
+              userLocation.value!.lat,
+              userLocation.value!.lng,
+              a.latitude,
+              a.longitude,
+            )
+            const distB = calculateDistance(
+              userLocation.value!.lat,
+              userLocation.value!.lng,
+              b.latitude,
+              b.longitude,
+            )
             return distA - distB
           })
         }
         break
       case 'rating':
-        filtered = filtered.sort((a, b) => (ratingOrder[b.rating] || 0) - (ratingOrder[a.rating] || 0))
+        filtered = filtered.sort(
+          (a, b) => (ratingOrder[b.rating] || 0) - (ratingOrder[a.rating] || 0),
+        )
         break
       case 'price_asc':
         filtered = filtered.sort((a, b) => a.price - b.price)
@@ -138,10 +158,13 @@ export const useRestaurantStore = defineStore('restaurants', () => {
     priceRanges,
     userLocation,
     sortBy,
+    isMapView,
+    mapState,
     setUserLocation,
+    setMapState,
     getDistance,
     allTags,
-    filteredRestaurants
+    filteredRestaurants,
   }
 })
 
@@ -152,8 +175,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const dLon = deg2rad(lon2 - lon1)
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
 }
