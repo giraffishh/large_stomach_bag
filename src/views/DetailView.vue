@@ -15,6 +15,8 @@ const restaurant = computed(() => {
 
 const displayAddress = computed(() => {
   if (!restaurant.value) return ''
+  if (restaurant.value.location) return restaurant.value.location
+
   const addr = restaurant.value.shareLink || ''
   const startMarker = '/人'
   const endMarker = 'https'

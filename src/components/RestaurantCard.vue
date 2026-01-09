@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Restaurant } from '@/stores/restaurants'
+import { useRestaurantStore } from '@/stores/restaurants'
 import RatingBadge from './RatingBadge.vue'
 import { MapPin, ArrowRight } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
@@ -10,12 +11,15 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const store = useRestaurantStore()
 
 const goToDetail = () => {
   router.push(`/restaurant/${props.restaurant.id}`)
 }
 
 const displayAddress = computed(() => {
+  if (props.restaurant.location) return props.restaurant.location
+
   const addr = props.restaurant.shareLink || ''
   const startMarker = '/人'
   const endMarker = 'https'
@@ -86,15 +90,22 @@ const displayAddress = computed(() => {
       <div
         class="flex items-center justify-between mt-1 pt-0 md:mt-2 md:pt-3 border-t border-zinc-100 dark:border-zinc-800"
       >
-        <div class="flex items-center gap-2 md:gap-3">
+        <div class="flex items-center gap-2 md:gap-3 grow">
           <div class="text-xs md:text-sm font-medium text-zinc-900 dark:text-zinc-200">
             ¥{{ restaurant.price }}
             <span class="text-zinc-400 text-[10px] md:text-xs font-normal">/人</span>
           </div>
           <RatingBadge :rating="restaurant.rating" class="scale-90 origin-left md:scale-100" />
+          
+          <span 
+            v-if="store.getDistance(restaurant)" 
+            class="text-xs text-zinc-500 dark:text-zinc-400 font-medium md:ml-1 ml-auto md:ml-0"
+          >
+            {{ store.getDistance(restaurant) }}
+          </span>
         </div>
         <button
-          class="hidden md:flex text-xs text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white items-center gap-1 transition-colors"
+          class="hidden md:flex text-xs text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white items-center gap-1 transition-colors shrink-0"
         >
           查看详情 <ArrowRight :size="14" />
         </button>

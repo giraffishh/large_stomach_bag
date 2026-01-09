@@ -1,24 +1,22 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
-import { useRestaurantStore } from '@/stores/restaurants'
-import { storeToRefs } from 'pinia'
 import { useIdle, useDark } from '@vueuse/core'
 import { Locate } from 'lucide-vue-next'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const map = shallowRef<any>(null)
 const mapContainer = ref<HTMLElement | null>(null)
-const timer = ref<any>(null)
-const userPosition = ref<any>(null) // Store latest user position
-const store = useRestaurantStore()
-const { filteredRestaurants } = storeToRefs(store)
+const timer = ref<ReturnType<typeof setInterval> | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const userPosition = ref<any>(null)
 
 const isDark = useDark()
 const lightStyle = 'amap://styles/7bea9294d71af33c16de9b52c2a16db6'
 const darkStyle = 'amap://styles/blue'
 
-// Detect user inactivity (2 minutes = 120000 ms)
-const { idle } = useIdle(2 * 60 * 1000)
+// Detect user inactivity (5 minutes = 300000 ms)
+const { idle } = useIdle(5 * 60 * 1000)
 
 // Function to manually center map on user
 const centerOnUser = () => {
@@ -32,7 +30,7 @@ const centerOnUser = () => {
 onMounted(() => {
   // IMPORTANT: Replace these with your actual AMap keys
   // Security configuration must be done before loading the API
-  ;(window as any)._AMapSecurityConfig = {
+  window._AMapSecurityConfig = {
     securityJsCode: 'a7f9391274c33dfcd39a523b9a42cabe',
   }
 
@@ -53,7 +51,7 @@ onMounted(() => {
 
       map.value = new AMap.Map(mapContainer.value, {
         viewMode: '2D',
-        zoom: 11,
+        zoom: 12,
         mapStyle: isDark.value ? darkStyle : lightStyle, // Dynamic initial style
         showIndoorMap: false, // Hide built-in indoor layer when using custom style
         layers: [indoorMapLayer, baseLayer],
@@ -77,6 +75,7 @@ onMounted(() => {
       // 2. Geolocation Logic
       // First, get coarse location via IP (CitySearch)
       const citySearch = new AMap.CitySearch()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       citySearch.getLocalCity((status: string, result: any) => {
         if (status === 'complete' && result.info === 'OK') {
           if (result.bounds) {
@@ -108,6 +107,7 @@ onMounted(() => {
         // If idle, do not perform update
         if (idle.value) return
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         geolocation.getCurrentPosition((status: string, result: any) => {
           if (status === 'complete') {
             console.log('Precise geolocation successful', result)
