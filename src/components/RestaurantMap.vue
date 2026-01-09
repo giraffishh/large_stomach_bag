@@ -272,7 +272,7 @@ onMounted(() => {
               ignoreMapClick = true
               setTimeout(() => {
                 ignoreMapClick = false
-              }, 50) // Reduced timeout
+              }, 300) // Increased timeout to prevent mobile race conditions
 
               // Pan and Zoom immediately for responsiveness
               if (map.value) {
