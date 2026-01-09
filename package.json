@@ -17,6 +17,7 @@
     "sync": "node scripts/sync.js"
   },
   "dependencies": {
+    "@amap/amap-jsapi-loader": "^1.0.1",
     "@notionhq/client": "^5.6.0",
     "@octokit/rest": "^22.0.1",
     "@vueuse/core": "^14.1.0",

@@ -183,8 +183,8 @@ async function simplifyPage(page) {
   // Rating (Select)
   const rating = props.Rating?.select?.name || "";
 
-  // Address (Link)
-  const address = props.Address?.url || "";
+  // ShareLink (Link)
+  const shareLink = props.ShareLink?.url || "";
 
   // Review (Text)
   const review = props.Review?.rich_text ? getPlainText(props.Review.rich_text) : "";
@@ -204,7 +204,7 @@ async function simplifyPage(page) {
     coverUrl,
     tags,
     rating,
-    address,
+    shareLink,
     review,
     price,
     lastEdited: page.last_edited_time

@@ -16,7 +16,7 @@ const goToDetail = () => {
 }
 
 const displayAddress = computed(() => {
-  const addr = props.restaurant.address || ''
+  const addr = props.restaurant.shareLink || ''
   const startMarker = '/人'
   const endMarker = 'https'
 

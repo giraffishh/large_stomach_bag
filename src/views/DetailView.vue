@@ -15,7 +15,7 @@ const restaurant = computed(() => {
 
 const displayAddress = computed(() => {
   if (!restaurant.value) return ''
-  const addr = restaurant.value.address || ''
+  const addr = restaurant.value.shareLink || ''
   const startMarker = '/人'
   const endMarker = 'https'
 
@@ -40,8 +40,8 @@ const displayAddress = computed(() => {
 })
 
 const mapUrl = computed(() => {
-  if (!restaurant.value?.address) return ''
-  const match = restaurant.value.address.match(/(https?:\/\/[^\s]+)/)
+  if (!restaurant.value?.shareLink) return ''
+  const match = restaurant.value.shareLink.match(/(https?:\/\/[^\s]+)/)
   return match ? match[0] : ''
 })
 

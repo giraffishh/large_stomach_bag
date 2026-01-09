@@ -10,7 +10,7 @@ export interface Restaurant {
   coverUrl: string
   tags: string[]
   rating: string
-  address: string
+  shareLink: string
   review: string
   price: number
   lastEdited: string
@@ -35,7 +35,7 @@ export const useRestaurantStore = defineStore('restaurants', () => {
       const q = searchQuery.value.toLowerCase()
       const matchesSearch = r.name.toLowerCase().includes(q) || 
                             r.review.toLowerCase().includes(q) ||
-                            r.address.toLowerCase().includes(q)
+                            r.shareLink.toLowerCase().includes(q)
       
       const matchesTags = selectedTags.value.length === 0 || 
                           selectedTags.value.every(tag => r.tags.includes(tag))
