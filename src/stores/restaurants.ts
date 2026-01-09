@@ -17,6 +17,7 @@ export interface Restaurant {
   longitude: number | null
   latitude: number | null
   location: string
+  city: string
   date?: string
 }
 
