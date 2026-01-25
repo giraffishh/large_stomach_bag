@@ -4,8 +4,36 @@ import { storeToRefs } from 'pinia'
 import { Search, Moon, Sun, Check, Map, List, Filter, X, ArrowUpDown } from 'lucide-vue-next'
 import RestaurantCard from '@/components/RestaurantCard.vue'
 import RestaurantMap from '@/components/RestaurantMap.vue'
+import CoverPage from '@/components/CoverPage.vue'
 import { useDark, useToggle, onClickOutside } from '@vueuse/core'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+
+// Scroll container ref
+const scrollContainerRef = ref<HTMLElement | null>(null)
+
+// Track scroll state
+
+const scrollToMain = () => {
+  const anchor = document.getElementById('main-content-anchor')
+  anchor?.scrollIntoView({ behavior: 'smooth' })
+}
+
+onMounted(() => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        store.setUserLocation(position.coords.latitude, position.coords.longitude)
+      },
+      (err) => {
+        console.warn('Geolocation error:', err)
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
+    )
+  }
+})
+
+onUnmounted(() => {
+})
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -21,20 +49,6 @@ const {
   sortBy,
   isMapView,
 } = storeToRefs(store)
-
-onMounted(() => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        store.setUserLocation(position.coords.latitude, position.coords.longitude)
-      },
-      (err) => {
-        console.warn('Geolocation error:', err)
-      },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
-    )
-  }
-})
 
 const ratings = ['夯', '人上人', 'npc', '拉完了']
 const priceOptions = [
@@ -169,43 +183,52 @@ const removeFilter = (filter: {
 </script>
 
 <template>
-  <main
-    class="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300"
-    :class="[isMapView ? '' : 'pb-20']"
+  <div
+    ref="scrollContainerRef"
+    class="h-screen overflow-y-auto scroll-snap-container"
   >
-    <header
-      class="sticky top-0 z-30 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800"
+    <!-- Cover Page -->
+    <CoverPage @scroll-down="scrollToMain" />
+
+    <!-- Main Content -->
+    <main
+      id="main-content-anchor"
+      class="min-h-screen bg-stone-100 dark:bg-zinc-950 transition-colors duration-300 snap-start"
+      :class="[isMapView ? '' : 'pb-20']"
     >
-      <div class="max-w-4xl mx-auto px-4 pt-4 pb-3 md:py-4">
-        <!-- Search Bar Row -->
-        <div class="flex items-center gap-3 mb-2">
-          <div class="relative group grow">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search
-                class="h-5 w-5 text-zinc-400 group-focus-within:text-indigo-500 transition-colors"
+      <header
+        class="sticky top-0 z-30 bg-stone-100/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-stone-200 dark:border-zinc-800"
+      >
+        <div class="max-w-4xl mx-auto px-4 pt-4 pb-3 md:py-4">
+          <!-- Search Bar Row -->
+          <div class="flex items-center gap-3 mb-2">
+            <div class="relative group grow">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search
+                  class="h-5 w-5 text-zinc-400 group-focus-within:text-indigo-500 transition-colors"
+                />
+              </div>
+              <input
+                v-model="searchQuery"
+                type="text"
+                class="block w-full pl-9 pr-3 py-2.5 md:pl-10 md:pr-3 md:py-3 border border-zinc-200 dark:border-zinc-700 rounded-xl leading-5 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-xs md:text-sm"
+                placeholder="搜索餐厅、评价、地址..."
               />
             </div>
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="block w-full pl-9 pr-3 py-2.5 md:pl-10 md:pr-3 md:py-3 border border-zinc-200 dark:border-zinc-700 rounded-xl leading-5 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-xs md:text-sm"
-              placeholder="搜索餐厅、评价、地址..."
-            />
+            <button
+              @click="isMapView = !isMapView"
+              class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors shrink-0"
+              :title="isMapView ? '切换到列表视图' : '切换到地图视图'"
+            >
+              <component :is="isMapView ? List : Map" :size="18" class="md:w-5 md:h-5" />
+            </button>
+            <button
+              @click="toggleDark()"
+              class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors shrink-0"
+            >
+              <component :is="isDark ? Moon : Sun" :size="18" class="md:w-5 md:h-5" />
+            </button>
           </div>
-          <button
-            @click="isMapView = !isMapView"
-            class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors shrink-0"
-            :title="isMapView ? '切换到列表视图' : '切换到地图视图'"
-          >
-            <component :is="isMapView ? List : Map" :size="18" class="md:w-5 md:h-5" />
-          </button>
-          <button
-            @click="toggleDark()"
-            class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors shrink-0"
-          >
-            <component :is="isDark ? Moon : Sun" :size="18" class="md:w-5 md:h-5" />
-          </button>
-        </div>
 
         <!-- Filter Toolbar Row -->
         <div class="flex items-center mt-1 md:mt-2 relative">
@@ -486,9 +509,19 @@ const removeFilter = (filter: {
       </div>
     </section>
   </main>
+  </div>
 </template>
 
 <style>
+.scroll-snap-container {
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+.scroll-snap-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

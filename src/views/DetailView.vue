@@ -51,7 +51,7 @@ const goBack = () => router.back()
 </script>
 
 <template>
-  <div v-if="restaurant" class="min-h-screen bg-white dark:bg-zinc-900 pb-20">
+  <div v-if="restaurant" class="min-h-screen bg-stone-100 dark:bg-zinc-900 pb-20">
     <!-- Hero Image -->
     <div class="relative h-64 md:h-96 w-full overflow-hidden">
       <img
