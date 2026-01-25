@@ -6,7 +6,7 @@ import RestaurantCard from '@/components/RestaurantCard.vue'
 import RestaurantMap from '@/components/RestaurantMap.vue'
 import CoverPage from '@/components/CoverPage.vue'
 import { useDark, useToggle, onClickOutside } from '@vueuse/core'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
 // Scroll container ref
 const scrollContainerRef = ref<HTMLElement | null>(null)
@@ -19,6 +19,35 @@ const scrollToMain = () => {
 }
 
 onMounted(() => {
+  console.log('[Scroll Debug] onMounted called, scrollContainerRef:', scrollContainerRef.value)
+
+  // Restore scroll position if returning from detail page
+  const savedScrollTop = sessionStorage.getItem('homeScrollPosition')
+  console.log('[Scroll Debug] Saved scroll position:', savedScrollTop)
+
+  if (savedScrollTop && scrollContainerRef.value) {
+    const container = scrollContainerRef.value
+    const targetScrollTop = parseInt(savedScrollTop)
+    console.log('[Scroll Debug] Restoring to position:', targetScrollTop)
+
+    // Temporarily disable scroll-snap to prevent it from overriding our position
+    container.style.scrollSnapType = 'none'
+
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      container.scrollTop = targetScrollTop
+      console.log('[Scroll Debug] Set scrollTop to:', container.scrollTop)
+
+      // Re-enable scroll-snap after a short delay
+      setTimeout(() => {
+        container.style.scrollSnapType = ''
+        // Clear the saved position after successful restore
+        sessionStorage.removeItem('homeScrollPosition')
+        console.log('[Scroll Debug] Scroll snap re-enabled, position cleared')
+      }, 100)
+    })
+  }
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -32,7 +61,16 @@ onMounted(() => {
   }
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  console.log('[Scroll Debug] onBeforeUnmount called, scrollContainerRef:', scrollContainerRef.value)
+  // Save scroll position when leaving
+  if (scrollContainerRef.value) {
+    const scrollTop = scrollContainerRef.value.scrollTop
+    console.log('[Scroll Debug] Saving scroll position:', scrollTop)
+    sessionStorage.setItem('homeScrollPosition', scrollTop.toString())
+  } else {
+    console.log('[Scroll Debug] WARNING: scrollContainerRef is null in onBeforeUnmount!')
+  }
 })
 
 const isDark = useDark()
