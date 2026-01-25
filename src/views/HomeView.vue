@@ -255,14 +255,16 @@ const removeFilter = (filter: {
             </div>
             <button
               @click="isMapView = !isMapView"
-              class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors shrink-0"
+              class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0"
               :title="isMapView ? '切换到列表视图' : '切换到地图视图'"
+              :aria-label="isMapView ? '切换到列表视图' : '切换到地图视图'"
             >
               <component :is="isMapView ? List : Map" :size="18" class="md:w-5 md:h-5" />
             </button>
             <button
               @click="toggleDark()"
-              class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors shrink-0"
+              class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0"
+              :aria-label="isDark ? '切换到亮色模式' : '切换到暗色模式'"
             >
               <component :is="isDark ? Moon : Sun" :size="18" class="md:w-5 md:h-5" />
             </button>
@@ -273,12 +275,13 @@ const removeFilter = (filter: {
           <div ref="filterMenuRef" class="relative shrink-0">
             <button
               @click="showFilterMenu = !showFilterMenu"
-              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[13px] font-bold border transition-all shadow-sm whitespace-nowrap"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[13px] font-bold border transition-all shadow-sm whitespace-nowrap focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
               :class="
                 selectedRatings.length > 0 || selectedTags.length > 0 || priceRanges.length > 0
                   ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900'
                   : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
               "
+              aria-label="打开筛选菜单"
             >
               <Filter :size="14" />
               <span>筛选</span>
@@ -496,7 +499,8 @@ const removeFilter = (filter: {
           <div ref="sortMenuRef" class="relative shrink-0 ml-2">
             <button
               @click="showSortMenu = !showSortMenu"
-              class="flex items-center gap-1 px-2 py-1.5 rounded-xl text-[13px] font-bold border bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 transition-all shadow-sm whitespace-nowrap"
+              class="flex items-center gap-1 px-2 py-1.5 rounded-xl text-[13px] font-bold border bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-all shadow-sm whitespace-nowrap"
+              aria-label="排序选项"
             >
               <ArrowUpDown :size="14" />
               <span>{{ selectedSortLabel }}</span>

@@ -267,7 +267,7 @@ onMounted(() => {
             context.marker.setzIndex(100)
 
             // Bind Click Event - Update State and Pan to Center
-            context.marker.on('click', (e: any) => {
+            context.marker.on('click', () => {
               // Prevent map click from triggering
               ignoreMapClick = true
               setTimeout(() => {

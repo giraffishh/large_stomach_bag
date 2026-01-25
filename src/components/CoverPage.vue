@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown } from 'lucide-vue-next'
+import { ChevronDown, UtensilsCrossed } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 
 const isVisible = ref(false)
@@ -36,12 +36,16 @@ const handleScrollDown = () => {
 
     <!-- Content -->
     <div class="relative z-10 text-center px-6">
-      <!-- Emoji/Icon -->
+      <!-- Icon -->
       <div
-        class="text-6xl md:text-7xl mb-6 transition-all duration-1000 ease-out"
+        class="mb-6 flex justify-center transition-all duration-1000 ease-out"
         :class="isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
       >
-        🍜
+        <UtensilsCrossed
+          :size="72"
+          :stroke-width="1.5"
+          class="text-orange-500 dark:text-zinc-300 md:w-24 md:h-24"
+        />
       </div>
 
       <!-- Title -->

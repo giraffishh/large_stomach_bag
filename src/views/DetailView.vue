@@ -57,7 +57,7 @@ const goBack = () => router.back()
       <img
         :src="restaurant.coverUrl || restaurant.cover || 'https://placehold.co/800x600'"
         class="w-full h-full object-cover"
-        alt="Cover"
+        :alt="`${restaurant.name} 封面图片`"
         v-motion
         :initial="{ scale: 1.1 }"
         :enter="{ scale: 1 }"
@@ -68,10 +68,10 @@ const goBack = () => router.back()
 
       <button
         @click="goBack"
-        class="absolute top-4 left-4 p-2 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/20 hover:bg-black/50 transition-colors z-10"
+        class="absolute top-4 left-4 p-2 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/20 hover:bg-black/50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 transition-colors z-10"
+        aria-label="返回上一页"
       >
         <ArrowLeft :size="20" class="md:hidden" />
-
         <ArrowLeft :size="24" class="hidden md:block" />
       </button>
 

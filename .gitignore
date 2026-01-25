@@ -24,6 +24,10 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+.shared
+.github
+.gemini
+.agent
 
 *.tsbuildinfo
 
