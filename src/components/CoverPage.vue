@@ -1,17 +1,61 @@
 <script setup lang="ts">
 import { ChevronDown, UtensilsCrossed } from 'lucide-vue-next'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, type Ref } from 'vue'
 
 const isVisible = ref(false)
+const displayedTitle = ref('')
+const displayedSubtitle = ref('')
+const cursorVisible = ref(true)
+const typingPhase = ref<'title' | 'subtitle' | 'completed'>('title')
+const showAuthor = ref(false)
+
+const titleText = '我也想拥有大胃袋...'
+const subtitleText = '从夯到拉的餐厅锐评'
+
 const emit = defineEmits<{
   scrollDown: []
 }>()
 
-onMounted(() => {
-  // Trigger entrance animation after mount
+const typeText = async (text: string, refVar: Ref<string>, delay: number = 100) => {
+  for (const char of text) {
+    refVar.value += char
+    // Randomize delay slightly for natural feel
+    await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 50 - 25))
+  }
+}
+
+onMounted(async () => {
+  // Trigger entrance animation for background/icon
   setTimeout(() => {
     isVisible.value = true
   }, 100)
+
+  // Start blinking cursor
+  setInterval(() => {
+    cursorVisible.value = !cursorVisible.value
+  }, 530)
+
+  // Wait a bit before typing starts
+  await new Promise(resolve => setTimeout(resolve, 800))
+
+  // Type Title
+  typingPhase.value = 'title'
+  await typeText(titleText, displayedTitle, 100) // 打字机间隔100ms
+
+  // Small pause between title and subtitle
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  // Type Subtitle
+  typingPhase.value = 'subtitle'
+  await typeText(subtitleText, displayedSubtitle, 80)
+
+  // Finish typing
+  typingPhase.value = 'completed'
+
+  // Show author
+  setTimeout(() => {
+    showAuthor.value = true
+  }, 300)
 })
 
 const handleScrollDown = () => {
@@ -50,30 +94,38 @@ const handleScrollDown = () => {
 
       <!-- Title -->
       <h1
-        class="text-3xl md:text-5xl lg:text-6xl font-black mb-4 tracking-tight transition-all duration-1000 ease-out delay-150 whitespace-nowrap"
-        :class="isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+        class="text-3xl md:text-5xl lg:text-6xl font-black mb-4 tracking-tight min-h-[1.2em] flex items-center justify-center gap-1"
       >
         <span class="bg-gradient-to-r from-amber-600 via-orange-500 to-rose-500 dark:from-white dark:via-zinc-200 dark:to-zinc-400 bg-clip-text text-transparent">
-          我也想拥有大胃袋...
+          {{ displayedTitle }}
         </span>
+        <span
+          v-if="cursorVisible && typingPhase === 'title'"
+          class="w-1 h-8 md:h-12 bg-orange-500 dark:bg-zinc-200 animate-pulse"
+        ></span>
       </h1>
 
       <!-- Subtitle -->
       <p
-        class="text-base md:text-lg transition-all duration-1000 ease-out delay-300 whitespace-nowrap"
-        :class="isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+        class="text-base md:text-lg min-h-[1.5em] flex items-center justify-center gap-1"
       >
         <span class="bg-gradient-to-r from-orange-500 via-rose-400 to-pink-400 dark:from-zinc-300 dark:via-zinc-400 dark:to-zinc-500 bg-clip-text text-transparent">
-          从夯到拉的餐厅锐评
+          {{ displayedSubtitle }}
         </span>
+        <span
+          v-if="cursorVisible && typingPhase === 'subtitle'"
+          class="w-0.5 h-5 md:h-6 bg-rose-400 dark:bg-zinc-400 animate-pulse"
+        ></span>
       </p>
 
       <!-- Author -->
       <p
-        class="text-sm text-zinc-400 dark:text-zinc-500 mt-6 italic transition-all duration-1000 ease-out delay-500 translate-x-8 md:translate-x-20"
-        :class="isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+        class="text-sm text-zinc-400 dark:text-zinc-500 mt-6 italic transition-all duration-1000 ease-out"
+        :class="showAuthor ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
       >
-        —— By Giraffish
+        <span class="inline-block translate-x-8 md:translate-x-20">
+          —— By Giraffish
+        </span>
       </p>
     </div>
 
