@@ -36,25 +36,51 @@ async function searchAMapPlace(keyword, city) {
       console.warn("Skipping AMap search: AMAP_KEY not found in env.");
       return null;
   }
-  try {
-    // Using v3/place/text
-    let url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}`;
-    if (city) {
-        url += `&city=${encodeURIComponent(city)}&city_limit=true`;
-    } else {
-        url += `&city_limit=false`;
-    }
 
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.status === '1' && data.pois && data.pois.length > 0) {
-      return data.pois[0]; // Return the first/best match
-    } else {
-      console.log(`No AMap results found for: ${keyword} (City: ${city || 'Any'})`);
+  const maxRetries = 3;
+  let attempt = 0;
+
+  while (attempt < maxRetries) {
+    try {
+      // Using v3/place/text
+      let url = `https://restapi.amap.com/v3/place/text?key=${AMAP_KEY}&keywords=${encodeURIComponent(keyword)}`;
+      if (city) {
+          url += `&city=${encodeURIComponent(city)}&city_limit=true`;
+      } else {
+          url += `&city_limit=false`;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+           throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.status === '1' && data.pois && data.pois.length > 0) {
+          return data.pois[0]; // Return the first/best match
+        } else {
+          console.log(`No AMap results found for: ${keyword} (City: ${city || 'Any'})`);
+          return null; // Don't retry if we got a valid "empty" response
+        }
+      } catch (innerError) {
+         clearTimeout(timeoutId);
+         throw innerError;
+      }
+
+    } catch (error) {
+      attempt++;
+      console.error(`AMap search error for ${keyword} (Attempt ${attempt}/${maxRetries}):`, error.message);
+      if (attempt >= maxRetries) return null;
+      // Wait 1s before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
-  } catch (error) {
-    console.error(`AMap search error for ${keyword}:`, error);
   }
   return null;
 }
@@ -257,9 +283,9 @@ async function simplifyPage(page) {
   if ((!longitude || !latitude || !location) && name !== "Unknown") {
       const searchCity = city || ""; // Use empty string if city is missing to imply global search
       console.log(`Missing location info for "${name}" (City: ${searchCity || "Global"}). Searching AMap...`);
-      
+
       const place = await searchAMapPlace(name, searchCity);
-      
+
       if (place) {
           const [lngStr, latStr] = place.location.split(',');
           const lng = parseFloat(lngStr);
@@ -267,7 +293,7 @@ async function simplifyPage(page) {
           // Combine adname (district) + address for better readability
           const fullAddress = (place.cityname || "") + (place.adname || "") + (place.address || "");
           const foundCity = place.cityname || ""; // Extract city from result
-          
+
           const updates = {};
           let needsUpdate = false;
 
