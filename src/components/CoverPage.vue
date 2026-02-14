@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronDown, UtensilsCrossed } from 'lucide-vue-next'
-import { ref, onMounted, type Ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount, type Ref } from 'vue'
 
 const isVisible = ref(false)
 const displayedTitle = ref('')
@@ -16,46 +16,73 @@ const emit = defineEmits<{
   scrollDown: []
 }>()
 
+// 用于清理的标记和定时器 ID
+let cursorIntervalId: ReturnType<typeof setInterval> | null = null
+let isCancelled = false
+
 const typeText = async (text: string, refVar: Ref<string>, delay: number = 100) => {
   for (const char of text) {
+    if (isCancelled) return
     refVar.value += char
-    // Randomize delay slightly for natural feel
+    // 随机化延迟让打字更自然
     await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 50 - 25))
   }
 }
 
 onMounted(async () => {
-  // Trigger entrance animation for background/icon
+  // 重置状态（确保从其他路由返回时正确初始化）
+  isCancelled = false
+  displayedTitle.value = ''
+  displayedSubtitle.value = ''
+  isVisible.value = false
+  showAuthor.value = false
+  typingPhase.value = 'title'
+  cursorVisible.value = true
+
+  // 触发入场动画
   setTimeout(() => {
     isVisible.value = true
   }, 100)
 
-  // Start blinking cursor
-  setInterval(() => {
+  // 开始光标闪烁
+  cursorIntervalId = setInterval(() => {
     cursorVisible.value = !cursorVisible.value
   }, 530)
 
-  // Wait a bit before typing starts
+  // 等待一段时间再开始打字
   await new Promise(resolve => setTimeout(resolve, 800))
+  if (isCancelled) return
 
-  // Type Title
+  // 打字 - 标题
   typingPhase.value = 'title'
-  await typeText(titleText, displayedTitle, 100) // 打字机间隔100ms
+  await typeText(titleText, displayedTitle, 100)
+  if (isCancelled) return
 
-  // Small pause between title and subtitle
+  // 标题和副标题之间的短暂停顿
   await new Promise(resolve => setTimeout(resolve, 500))
+  if (isCancelled) return
 
-  // Type Subtitle
+  // 打字 - 副标题
   typingPhase.value = 'subtitle'
   await typeText(subtitleText, displayedSubtitle, 80)
+  if (isCancelled) return
 
-  // Finish typing
+  // 完成打字
   typingPhase.value = 'completed'
 
-  // Show author
+  // 显示作者
   setTimeout(() => {
     showAuthor.value = true
   }, 300)
+})
+
+onBeforeUnmount(() => {
+  // 清理定时器和取消进行中的动画
+  isCancelled = true
+  if (cursorIntervalId !== null) {
+    clearInterval(cursorIntervalId)
+    cursorIntervalId = null
+  }
 })
 
 const handleScrollDown = () => {

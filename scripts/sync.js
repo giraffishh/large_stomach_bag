@@ -6,9 +6,17 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { Octokit } from '@octokit/rest'
 import sharp from 'sharp'
+import { setGlobalDispatcher, ProxyAgent } from 'undici'
 
 // Load environment variables
 dotenv.config()
+
+// Proxy support
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.https_proxy || process.env.http_proxy
+if (proxyUrl) {
+  console.log(`Using proxy: ${proxyUrl}`)
+  setGlobalDispatcher(new ProxyAgent(proxyUrl))
+}
 
 const notion = new Client({ auth: process.env.NOTION_KEY })
 const databaseId = process.env.NOTION_DB_ID

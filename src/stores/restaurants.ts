@@ -28,12 +28,17 @@ export const useRestaurantStore = defineStore('restaurants', () => {
   const selectedRatings = ref<string[]>([])
   const priceRanges = ref<{ min: number; max: number }[]>([])
   const userLocation = ref<{ lat: number; lng: number } | null>(null)
+  const userCity = ref<string>('')
   const sortBy = ref<'default' | 'distance' | 'rating' | 'price_asc' | 'price_desc'>('default')
   const isMapView = ref(false)
   const mapState = ref<{ center: [number, number]; zoom: number } | null>(null)
 
   const setUserLocation = (lat: number, lng: number) => {
     userLocation.value = { lat, lng }
+  }
+
+  const setUserCity = (city: string) => {
+    userCity.value = city
   }
 
   const setMapState = (center: [number, number], zoom: number) => {
@@ -94,24 +99,28 @@ export const useRestaurantStore = defineStore('restaurants', () => {
     // Sorting logic
     switch (sortBy.value) {
       case 'default':
-        if (selectedTags.value.length > 0) {
-          filtered = filtered.sort((a, b) => {
+        // Sort by City Match first, then Tags/Date
+        filtered = filtered.sort((a, b) => {
+          // Level 1: City Match (If userCity is known)
+          if (userCity.value) {
+            const isCityA = a.city.includes(userCity.value) || userCity.value.includes(a.city)
+            const isCityB = b.city.includes(userCity.value) || userCity.value.includes(b.city)
+            if (isCityA && !isCityB) return -1
+            if (!isCityA && isCityB) return 1
+          }
+
+          if (selectedTags.value.length > 0) {
+            // Level 2: Tag Match
             const countA = a.tags.filter((t) => selectedTags.value.includes(t)).length
             const countB = b.tags.filter((t) => selectedTags.value.includes(t)).length
             if (countA !== countB) return countB - countA
-            // Secondary sort by Date (descending)
-            const dateA = a.date ? new Date(a.date).getTime() : 0
-            const dateB = b.date ? new Date(b.date).getTime() : 0
-            return dateB - dateA
-          })
-        } else {
-          // No tags selected, sort by Date (descending)
-          filtered = filtered.sort((a, b) => {
-            const dateA = a.date ? new Date(a.date).getTime() : 0
-            const dateB = b.date ? new Date(b.date).getTime() : 0
-            return dateB - dateA
-          })
-        }
+          }
+
+          // Level 3: Date (descending)
+          const dateA = a.date ? new Date(a.date).getTime() : 0
+          const dateB = b.date ? new Date(b.date).getTime() : 0
+          return dateB - dateA
+        })
         break
       case 'distance':
         if (userLocation.value) {
@@ -157,10 +166,12 @@ export const useRestaurantStore = defineStore('restaurants', () => {
     selectedRatings,
     priceRanges,
     userLocation,
+    userCity,
     sortBy,
     isMapView,
     mapState,
     setUserLocation,
+    setUserCity,
     setMapState,
     getDistance,
     allTags,

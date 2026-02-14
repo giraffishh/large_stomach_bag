@@ -135,7 +135,7 @@
     "latitude": 22.646566,
     "location": "深圳市龙华区龙华街道景新社区人民路4020号中2栋壹方天地B区L1-023",
     "date": "2025-12-31",
-    "lastEdited": "2026-01-09T12:35:00.000Z"
+    "lastEdited": "2026-01-27T09:24:00.000Z"
   },
   {
     "id": "2e18beff-9e39-8007-95ca-d1e8e72359ba",
@@ -188,13 +188,110 @@
     ],
     "rating": "人上人",
     "shareLink": "【一绪に和牛寿喜烧(龙华壹方天地店)】 ★★★★★ 4.8 ¥195/人 龙华 自助餐 工业路龙华壹方天地C区4楼008铺 https://m.dianping.com/shopinfo/G39sYmfcNVpOHqqz?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=111&cityid=7&isoversea=0",
-    "review": "学长请吃的最高档！！和牛还是很可以的，包泡菜吃很绝，贵有贵的道理，比上脑好吃多了，刺身也挺不错，鱼腩很肥，雪糕不甜很好吃，但是总体还是太贵了",
+    "review": "学长请吃的最高档位！！和牛还是很可以的，包泡菜吃很绝，贵有贵的道理，比上脑好吃多了，刺身也挺不错，鱼腩很肥，雪糕不甜很好吃，但是总体还是太贵了",
     "price": 259,
     "city": "深圳市",
     "longitude": 114.030105,
     "latitude": 22.64388,
     "location": "深圳市龙华区人民路4022号壹方天地C区4楼",
-    "date": "2026-01-10",
-    "lastEdited": "2026-01-10T15:33:00.000Z"
+    "date": "2026-01-11",
+    "lastEdited": "2026-01-10T16:08:00.000Z"
+  },
+  {
+    "id": "2ff8beff-9e39-80a0-b12a-c43dce73fad2",
+    "name": "Meet(萃锦园店)",
+    "cover": "",
+    "coverUrl": "https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/food/20260206105608_5317.webp",
+    "tags": [
+      "甜品店"
+    ],
+    "rating": "人上人",
+    "shareLink": "【Meet(萃锦园店)】 ★★★★☆ 4.1 ¥37/人 益华 面包蛋糕 育德街萃锦园53号之107号 https://m.dianping.com/shopinfo/G9yBvC4kjFne0bvY?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=34245&cityid=209&isoversea=0",
+    "review": "饮料都好甜，但是环境很好，适合下午约会。",
+    "price": 20,
+    "city": "江门市",
+    "longitude": 113.081321,
+    "latitude": 22.607083,
+    "location": "江门市蓬江区育德街萃锦园53号107铺",
+    "date": "2026-02-06",
+    "lastEdited": "2026-02-06T10:57:00.000Z"
+  },
+  {
+    "id": "3028beff-9e39-80ec-84a4-e408ca1fa4f1",
+    "name": "牛飸•汉味牛杂·烧烤(三阳路店)",
+    "cover": "",
+    "coverUrl": "https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/food/20260209065613_7944.webp",
+    "tags": [
+      "火锅"
+    ],
+    "rating": "夯",
+    "shareLink": "【牛飸•汉味牛杂·烧烤(三阳路店)】 ★★★★☆ 4.3 ¥54/人 三阳路/山海关路 烧烤烤串 三阳路11号第9号楼1层108室 https://m.dianping.com/shopinfo/G9ut0QtDIkpLV26A?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=508&cityid=16&isoversea=0",
+    "review": "番茄牛肉牛筋锅超级香，番茄味很浓很浓，牛肉牛筋都很嫩，分量很大",
+    "price": 58,
+    "city": "武汉市",
+    "longitude": 114.305705,
+    "latitude": 30.596602,
+    "location": "武汉市江岸区三阳路11号第9号楼1层108室牛飸",
+    "date": "2026-02-09",
+    "lastEdited": "2026-02-10T12:36:00.000Z"
+  },
+  {
+    "id": "3038beff-9e39-8016-a9af-d457f4567a79",
+    "name": "O'eat Blossom&Pelican(武汉新天地店)",
+    "cover": "",
+    "coverUrl": "https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/food/20260210071539_0399.webp",
+    "tags": [
+      "西餐",
+      "漂亮饭"
+    ],
+    "rating": "人上人",
+    "shareLink": "【O'eat Blossom&Pelican(武汉新天地店)】 ★★★★★ 4.8 ¥118/人 解放公园/武汉天地 牛排 卢沟桥路28号武汉新天地2期9栋1层（Godiva旁） https://m.dianping.com/shopinfo/H7ywYN6Kb7jQXbFb?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=254&cityid=16&isoversea=0",
+    "review": "标准漂亮饭，环境服务都很好，出品中规中矩，烤鸡没完全熟..芝士炸鸡翅鸡腿都没什么肉，也没芝士味，但是苹果那个沙拉还是可以的",
+    "price": 113,
+    "city": "武汉市",
+    "longitude": 114.312187,
+    "latitude": 30.607172,
+    "location": "武汉市江岸区永清街道卢沟桥路48号武汉新天地9栋1楼(近9号楼电梯厅)",
+    "date": "2026-02-09",
+    "lastEdited": "2026-02-10T12:36:00.000Z"
+  },
+  {
+    "id": "3038beff-9e39-8087-aa14-d0bdeb9fad2b",
+    "name": "绿洲Oasis(江汉路咸安坊店)",
+    "cover": "",
+    "coverUrl": "https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/food/20260210123538_2258.webp",
+    "tags": [
+      "西餐",
+      "漂亮饭"
+    ],
+    "rating": "人上人",
+    "shareLink": "【绿洲Oasis(江汉路咸安坊店)】 ★★★★★ 4.8 ¥114/人 江汉路/南京路 西餐 鄱阳街21号华发外滩荟(咸安坊)D-F5栋1F103号 https://m.dianping.com/shopinfo/F9fQUMwcO28bPTMy?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=116&cityid=16&isoversea=0",
+    "review": "大众点评里面号称全武汉排第一的西餐厅，出品还可以的，烤排骨很香很香，啃得很爽，服务环境没得说",
+    "price": 70,
+    "city": "武汉市",
+    "longitude": 114.296329,
+    "latitude": 30.58338,
+    "location": "武汉市江岸区一元街道鄱阳街21号D-F5楼1F",
+    "date": "2026-02-10",
+    "lastEdited": "2026-02-10T12:36:00.000Z"
+  },
+  {
+    "id": "3058beff-9e39-80a0-9634-df3f964982ec",
+    "name": "肆季小馆 Bistro Coffee(一汇广场店)",
+    "cover": "",
+    "coverUrl": "https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/food/20260214094606_0536.webp",
+    "tags": [
+      "漂亮饭"
+    ],
+    "rating": "npc",
+    "shareLink": "【肆季小馆 Bistro Coffee(一汇广场店)】 ★★★★☆ 4.3 ¥59/人 五邑大学 特色菜 白沙街道建设路36号（一汇广场斜对面） https://m.dianping.com/shopinfo/k3HobddnsjL1poAg?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=34284&cityid=209&isoversea=0",
+    "review": "不好吃，吃完喉咙巨无敌疼（",
+    "price": 48,
+    "city": "江门市",
+    "longitude": 113.07219,
+    "latitude": 22.592006,
+    "location": "江门市蓬江区天河中路26号109号",
+    "date": "2026-02-13",
+    "lastEdited": "2026-02-14T09:46:00.000Z"
   }
 ]

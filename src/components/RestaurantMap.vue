@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import AMapLoader from '@amap/amap-jsapi-loader'
 import { useIdle, useDark } from '@vueuse/core'
 import { Locate } from 'lucide-vue-next'
 import { useRestaurantStore, type Restaurant } from '@/stores/restaurants'
 import RestaurantCard from '@/components/RestaurantCard.vue'
+import { useAMap } from '@/composables/useAMap'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const map = shallowRef<any>(null)
@@ -20,6 +20,7 @@ const isCardInteractable = ref(false)
 
 const router = useRouter()
 const restaurantStore = useRestaurantStore()
+const { initAMap } = useAMap()
 
 const isDark = useDark()
 const lightStyle = 'amap://styles/7bea9294d71af33c16de9b52c2a16db6'
@@ -154,24 +155,9 @@ const getRatingColor = (rating: string) => {
 }
 
 onMounted(() => {
-  // IMPORTANT: Replace these with your actual AMap keys
-  // Security configuration must be done before loading the API
-  window._AMapSecurityConfig = {
-    securityJsCode: 'a7f9391274c33dfcd39a523b9a42cabe',
-  }
+  // Use shared initAMap function
+  initAMap().then((AMap) => {
 
-  AMapLoader.load({
-    key: '59e2827ddb4005767461570e23528377',
-    version: '2.0',
-    plugins: [
-      'AMap.ControlBar',
-      'AMap.Geolocation',
-      'AMap.CitySearch',
-      'AMap.TileLayer.Traffic',
-      'AMap.IndoorMap',
-    ],
-  })
-    .then((AMap) => {
       const indoorMapLayer = new AMap.IndoorMap()
       const baseLayer = AMap.createDefaultLayer()
 
@@ -347,18 +333,13 @@ onMounted(() => {
       })
 
       // 2. Geolocation Logic
-      // First, get coarse location via IP (CitySearch)
-      // Only execute if we DON'T have a saved map state
-      if (!restaurantStore.mapState) {
-        const citySearch = new AMap.CitySearch()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        citySearch.getLocalCity((status: string, result: any) => {
-          if (status === 'complete' && result.info === 'OK') {
-            if (result.bounds) {
-              map.value.setBounds(result.bounds)
-            }
-          }
-        })
+      // If we don't have a saved map state, but we have user location from Store (via HomeView), center there
+      if (!restaurantStore.mapState && restaurantStore.userLocation) {
+        map.value.setCenter([restaurantStore.userLocation.lng, restaurantStore.userLocation.lat])
+        userPosition.value = {
+            lat: restaurantStore.userLocation.lat,
+            lng: restaurantStore.userLocation.lng
+        }
       }
 
       // Prepare Precise Geolocation
@@ -387,7 +368,8 @@ onMounted(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         geolocation.getCurrentPosition((status: string, result: any) => {
           if (status === 'complete') {
-            console.log('Precise geolocation successful', result)
+            // console.log('Precise geolocation successful', result)
+
             userPosition.value = result.position // Update stored position
 
             // Only center on the very first load (keep user-selected zoom)

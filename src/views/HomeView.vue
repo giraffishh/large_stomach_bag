@@ -3,74 +3,17 @@ import { useRestaurantStore } from '@/stores/restaurants'
 import { storeToRefs } from 'pinia'
 import { Search, Moon, Sun, Check, Map, List, Filter, X, ArrowUpDown } from 'lucide-vue-next'
 import RestaurantCard from '@/components/RestaurantCard.vue'
-import RestaurantMap from '@/components/RestaurantMap.vue'
-import CoverPage from '@/components/CoverPage.vue'
 import { useDark, useToggle, onClickOutside } from '@vueuse/core'
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+import { useAMap } from '@/composables/useAMap'
 
-// Scroll container ref
-const scrollContainerRef = ref<HTMLElement | null>(null)
+const RestaurantMap = defineAsyncComponent(() => import('@/components/RestaurantMap.vue'))
 
-// Track scroll state
-
-const scrollToMain = () => {
-  const anchor = document.getElementById('main-content-anchor')
-  anchor?.scrollIntoView({ behavior: 'smooth' })
-}
+const { initLocation } = useAMap()
 
 onMounted(() => {
-  console.log('[Scroll Debug] onMounted called, scrollContainerRef:', scrollContainerRef.value)
-
-  // Restore scroll position if returning from detail page
-  const savedScrollTop = sessionStorage.getItem('homeScrollPosition')
-  console.log('[Scroll Debug] Saved scroll position:', savedScrollTop)
-
-  if (savedScrollTop && scrollContainerRef.value) {
-    const container = scrollContainerRef.value
-    const targetScrollTop = parseInt(savedScrollTop)
-    console.log('[Scroll Debug] Restoring to position:', targetScrollTop)
-
-    // Temporarily disable scroll-snap to prevent it from overriding our position
-    container.style.scrollSnapType = 'none'
-
-    // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
-      container.scrollTop = targetScrollTop
-      console.log('[Scroll Debug] Set scrollTop to:', container.scrollTop)
-
-      // Re-enable scroll-snap after a short delay
-      setTimeout(() => {
-        container.style.scrollSnapType = ''
-        // Clear the saved position after successful restore
-        sessionStorage.removeItem('homeScrollPosition')
-        console.log('[Scroll Debug] Scroll snap re-enabled, position cleared')
-      }, 100)
-    })
-  }
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        store.setUserLocation(position.coords.latitude, position.coords.longitude)
-      },
-      (err) => {
-        console.warn('Geolocation error:', err)
-      },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
-    )
-  }
-})
-
-onBeforeUnmount(() => {
-  console.log('[Scroll Debug] onBeforeUnmount called, scrollContainerRef:', scrollContainerRef.value)
-  // Save scroll position when leaving
-  if (scrollContainerRef.value) {
-    const scrollTop = scrollContainerRef.value.scrollTop
-    console.log('[Scroll Debug] Saving scroll position:', scrollTop)
-    sessionStorage.setItem('homeScrollPosition', scrollTop.toString())
-  } else {
-    console.log('[Scroll Debug] WARNING: scrollContainerRef is null in onBeforeUnmount!')
-  }
+  // Initialize Location Services immediately on load
+  initLocation()
 })
 
 const isDark = useDark()
@@ -221,17 +164,9 @@ const removeFilter = (filter: {
 </script>
 
 <template>
-  <div
-    ref="scrollContainerRef"
-    class="h-screen overflow-y-auto scroll-snap-container"
-  >
-    <!-- Cover Page -->
-    <CoverPage @scroll-down="scrollToMain" />
-
-    <!-- Main Content -->
+    <!-- 主内容 -->
     <main
-      id="main-content-anchor"
-      class="min-h-screen bg-stone-100 dark:bg-zinc-950 transition-colors duration-300 snap-start"
+      class="min-h-screen bg-stone-100 dark:bg-zinc-950 transition-colors duration-300"
       :class="[isMapView ? '' : 'pb-20']"
     >
       <header
@@ -551,19 +486,9 @@ const removeFilter = (filter: {
       </div>
     </section>
   </main>
-  </div>
 </template>
 
 <style>
-.scroll-snap-container {
-  scroll-snap-type: y mandatory;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
-.scroll-snap-container {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
