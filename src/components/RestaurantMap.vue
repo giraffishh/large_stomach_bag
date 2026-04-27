@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef, watch, type WatchStopHandle } from 'vue'
 import { useRouter } from 'vue-router'
 import { useIdle, useDark } from '@vueuse/core'
 import { Locate } from 'lucide-vue-next'
@@ -17,6 +17,7 @@ const timer = ref<ReturnType<typeof setInterval> | null>(null)
 const userPosition = ref<any>(null)
 const selectedRestaurant = ref<Restaurant | null>(null)
 const isCardInteractable = ref(false)
+const stopHandles: WatchStopHandle[] = []
 
 const router = useRouter()
 const restaurantStore = useRestaurantStore()
@@ -33,6 +34,7 @@ const { idle } = useIdle(5 * 60 * 1000)
 const touchStartY = ref(0)
 const cardTranslateY = ref(0)
 const isDragging = ref(false)
+let isDisposed = false
 
 const handleTouchStart = (e: TouchEvent) => {
   if (e.touches.length > 0) {
@@ -76,6 +78,14 @@ const handleMobileCardClick = (e: Event) => {
 // Animation frame ID for cancellation
 let animationFrameId: number | null = null
 
+const registerStopHandle = (stopHandle: WatchStopHandle) => {
+  stopHandles.push(stopHandle)
+}
+
+const hasActiveMap = () => {
+  return !isDisposed && !!map.value && !!mapContainer.value
+}
+
 // Smooth Pan & Zoom Animation Helper for 2D Map
 const smoothFlyTo = (
   targetLng: number,
@@ -83,7 +93,7 @@ const smoothFlyTo = (
   targetZoom?: number,
   duration: number = 400,
 ) => {
-  if (!map.value) return
+  if (!hasActiveMap()) return
 
   // Cancel any existing animation
   if (animationFrameId !== null) {
@@ -127,7 +137,7 @@ const smoothFlyTo = (
 
 // Function to manually center map on user
 const centerOnUser = () => {
-  if (userPosition.value && map.value) {
+  if (userPosition.value && hasActiveMap()) {
     // Handle AMap.LngLat object (has lng/lat props) or Array
     const lng = userPosition.value.lng ?? userPosition.value[0]
     const lat = userPosition.value.lat ?? userPosition.value[1]
@@ -155,8 +165,13 @@ const getRatingColor = (rating: string) => {
 }
 
 onMounted(() => {
+  isDisposed = false
+
   // Use shared initAMap function
   initAMap().then((AMap) => {
+      if (isDisposed || !mapContainer.value) {
+        return
+      }
 
       const indoorMapLayer = new AMap.IndoorMap()
       const baseLayer = AMap.createDefaultLayer()
@@ -172,7 +187,7 @@ onMounted(() => {
 
       // Save map state on move/zoom
       const saveState = () => {
-        if (map.value) {
+        if (hasActiveMap()) {
           const center = map.value.getCenter()
           const zoom = map.value.getZoom()
           restaurantStore.setMapState([center.lng, center.lat], zoom)
@@ -182,11 +197,13 @@ onMounted(() => {
       map.value.on('zoomend', saveState)
 
       // Watch for dark mode changes
-      watch(isDark, (val) => {
-        if (map.value) {
-          map.value.setMapStyle(val ? darkStyle : lightStyle)
-        }
-      })
+      registerStopHandle(
+        watch(isDark, (val) => {
+          if (hasActiveMap()) {
+            map.value.setMapStyle(val ? darkStyle : lightStyle)
+          }
+        }),
+      )
 
       // Flag to prevent map click when clicking a marker
       let ignoreMapClick = false
@@ -205,133 +222,141 @@ onMounted(() => {
       })
       map.value.add(trafficLayer)
 
-      // Explicitly load MarkerCluster plugin to ensure constructor exists
-      AMap.plugin(['AMap.MarkerCluster'], () => {
-        // Helper to format points
-        const getClusterPoints = (list: Restaurant[]) => {
-          return list
-            .filter((r) => r.latitude && r.longitude)
-            .map((r) => ({
-              lnglat: [r.longitude, r.latitude],
-              ...r,
-            }))
+      // Helper to format points
+      const getClusterPoints = (list: Restaurant[]) => {
+        return list
+          .filter((r) => r.latitude && r.longitude)
+          .map((r) => ({
+            lnglat: [r.longitude, r.latitude],
+            ...r,
+          }))
+      }
+
+      // Initialize or replace Cluster. AMap MarkerCluster#setData can break with
+      // custom marker renderers, so we recreate the cluster when filters change.
+      const renderCluster = (list: Restaurant[]) => {
+        if (!hasActiveMap()) {
+          return
         }
 
-        // Initialize or replace Cluster. AMap MarkerCluster#setData can break with
-        // custom marker renderers, so we recreate the cluster when filters change.
-        const renderCluster = (list: Restaurant[]) => {
-          const points = getClusterPoints(list)
+        const points = getClusterPoints(list)
 
-          // Custom render function for single markers (Restaurant)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const renderMarker = (context: any) => {
-            const r = context.data[0] // Data passed as array
-            const colors = getRatingColor(r.rating)
+        // Custom render function for single markers (Restaurant)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const renderMarker = (context: any) => {
+          const r = context.data[0] // Data passed as array
+          const colors = getRatingColor(r.rating)
 
-            // Rounded Star SVG (24px)
-            const starSvg = `
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FACC15" stroke="#FFFFFF" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-md">
-                <path d="M11.23 2.44l-2.16 4.77-5.15.73c-.91.13-1.27 1.25-.61 1.88l3.73 3.58-.88 5.13c-.16.91.8 1.6 1.61 1.17L12 17.27l4.63 2.43c.81.43 1.77-.26 1.61-1.17l-.88-5.13 3.73-3.58c.66-.63.3-1.75-.61-1.88l-5.15-.73-2.16-4.77c-.39-.82-1.55-.82-1.94 0z"/>
-              </svg>
-            `
+          // Rounded Star SVG (24px)
+          const starSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FACC15" stroke="#FFFFFF" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-md">
+              <path d="M11.23 2.44l-2.16 4.77-5.15.73c-.91.13-1.27 1.25-.61 1.88l3.73 3.58-.88 5.13c-.16.91.8 1.6 1.61 1.17L12 17.27l4.63 2.43c.81.43 1.77-.26 1.61-1.17l-.88-5.13 3.73-3.58c.66-.63.3-1.75-.61-1.88l-5.15-.73-2.16-4.77c-.39-.82-1.55-.82-1.94 0z"/>
+            </svg>
+          `
 
-            const content = `
-              <div class="custom-marker-wrapper group">
-                <div class="marker-star transform transition-transform group-hover:scale-110">
-                  ${starSvg}
-                </div>
-                <div class="marker-info">
-                  <div class="restaurant-name"
-                       style="--text-color-light: ${colors.light}; --text-color-dark: ${colors.dark};">
-                    ${r.name}
-                  </div>
+          const content = `
+            <div class="custom-marker-wrapper group">
+              <div class="marker-star transform transition-transform group-hover:scale-110">
+                ${starSvg}
+              </div>
+              <div class="marker-info">
+                <div class="restaurant-name"
+                     style="--text-color-light: ${colors.light}; --text-color-dark: ${colors.dark};">
+                  ${r.name}
                 </div>
               </div>
-            `
+            </div>
+          `
 
-            context.marker.setContent(content)
-            context.marker.setOffset(new AMap.Pixel(-12, -24))
-            context.marker.setzIndex(100)
+          context.marker.setContent(content)
+          context.marker.setOffset(new AMap.Pixel(-12, -24))
+          context.marker.setzIndex(100)
 
-            // Bind Click Event - Update State and Pan to Center
-            context.marker.on('click', () => {
-              // Prevent map click from triggering
-              ignoreMapClick = true
-              setTimeout(() => {
-                ignoreMapClick = false
-              }, 300) // Increased timeout to prevent mobile race conditions
-
-              // Pan and Zoom immediately for responsiveness
-              if (map.value) {
-                smoothFlyTo(r.longitude!, r.latitude!, 14)
-              }
-
-              // Temporarily disable card interaction to prevent ghost clicks
-              isCardInteractable.value = false
-              selectedRestaurant.value = r
-              setTimeout(() => {
-                isCardInteractable.value = true
-              }, 400)
-            })
-          }
-
-          // Custom render function for cluster markers (Aggregated)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const renderClusterMarker = (context: any) => {
-            const count = context.count
-            // Slightly smaller Star (32px) for Cluster
-            const starSvg = `
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#FACC15" stroke="#FFFFFF" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-lg">
-                <path d="M11.23 2.44l-2.16 4.77-5.15.73c-.91.13-1.27 1.25-.61 1.88l3.73 3.58-.88 5.13c-.16.91.8 1.6 1.61 1.17L12 17.27l4.63 2.43c.81.43 1.77-.26 1.61-1.17l-.88-5.13 3.73-3.58c.66-.63.3-1.75-.61-1.88l-5.15-.73-2.16-4.77c-.39-.82-1.55-.82-1.94 0z"/>
-              </svg>
-            `
-
-            const content = `
-              <div class="cluster-marker-container">
-                <div class="cluster-star">${starSvg}</div>
-                <div class="cluster-count">${count}</div>
-              </div>
-            `
-
-            context.marker.setContent(content)
-            context.marker.setOffset(new AMap.Pixel(-16, -32)) // Updated offset for 32x32
-            context.marker.setzIndex(200)
-
-            // Bind Click Event - Pan to Cluster Center
-            context.marker.on('click', () => {
-              const pos = context.marker.getPosition()
-              if (pos && map.value) {
-                smoothFlyTo(pos.lng, pos.lat)
-              }
-            })
-          }
-
-          if (AMap.MarkerCluster) {
-            if (cluster.value) {
-              cluster.value.setMap(null)
+          // Bind Click Event - Update State and Pan to Center
+          context.marker.on('click', () => {
+            if (isDisposed) {
+              return
             }
 
-            cluster.value = new AMap.MarkerCluster(map.value, points, {
-              gridSize: 20, // Reduced from 60 to make clustering less aggressive
-              renderMarker: renderMarker,
-              renderClusterMarker: renderClusterMarker,
-            })
-          } else {
-            console.error('AMap.MarkerCluster is not loaded.')
-          }
+            // Prevent map click from triggering
+            ignoreMapClick = true
+            setTimeout(() => {
+              ignoreMapClick = false
+            }, 300) // Increased timeout to prevent mobile race conditions
+
+            // Pan and Zoom immediately for responsiveness
+            if (hasActiveMap()) {
+              smoothFlyTo(r.longitude!, r.latitude!, 14)
+            }
+
+            // Temporarily disable card interaction to prevent ghost clicks
+            isCardInteractable.value = false
+            selectedRestaurant.value = r
+            setTimeout(() => {
+              if (!isDisposed) {
+                isCardInteractable.value = true
+              }
+            }, 400)
+          })
         }
 
-        // Initialize markers after plugin load
-        renderCluster(restaurantStore.filteredRestaurants)
+        // Custom render function for cluster markers (Aggregated)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const renderClusterMarker = (context: any) => {
+          const count = context.count
+          // Slightly smaller Star (32px) for Cluster
+          const starSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#FACC15" stroke="#FFFFFF" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-lg">
+              <path d="M11.23 2.44l-2.16 4.77-5.15.73c-.91.13-1.27 1.25-.61 1.88l3.73 3.58-.88 5.13c-.16.91.8 1.6 1.61 1.17L12 17.27l4.63 2.43c.81.43 1.77-.26 1.61-1.17l-.88-5.13 3.73-3.58c.66-.63.3-1.75-.61-1.88l-5.15-.73-2.16-4.77c-.39-.82-1.55-.82-1.94 0z"/>
+            </svg>
+          `
 
-        // Watch for filter changes and update cluster data
+          const content = `
+            <div class="cluster-marker-container">
+              <div class="cluster-star">${starSvg}</div>
+              <div class="cluster-count">${count}</div>
+            </div>
+          `
+
+          context.marker.setContent(content)
+          context.marker.setOffset(new AMap.Pixel(-16, -32)) // Updated offset for 32x32
+          context.marker.setzIndex(200)
+
+          // Bind Click Event - Pan to Cluster Center
+          context.marker.on('click', () => {
+            const pos = context.marker.getPosition()
+            if (pos && hasActiveMap()) {
+              smoothFlyTo(pos.lng, pos.lat)
+            }
+          })
+        }
+
+        if (!AMap.MarkerCluster) {
+          console.error('AMap.MarkerCluster is not loaded.')
+          return
+        }
+
+        if (cluster.value) {
+          cluster.value.setMap(null)
+        }
+
+        cluster.value = new AMap.MarkerCluster(map.value, points, {
+          gridSize: 20, // Reduced from 60 to make clustering less aggressive
+          renderMarker: renderMarker,
+          renderClusterMarker: renderClusterMarker,
+        })
+      }
+
+      renderCluster(restaurantStore.filteredRestaurants)
+
+      registerStopHandle(
         watch(
           () => restaurantStore.filteredRestaurants,
           (newVal) => {
             renderCluster(newVal)
           },
-        )
-      })
+        ),
+      )
 
       // 2. Geolocation Logic
       // If we don't have a saved map state, but we have user location from Store (via HomeView), center there
@@ -391,21 +416,23 @@ onMounted(() => {
       timer.value = setInterval(startPositioning, 30000)
 
       // Watch idle state to manage timer resource
-      watch(idle, (isIdle) => {
-        if (isIdle) {
-          if (timer.value) {
-            clearInterval(timer.value)
-            timer.value = null
+      registerStopHandle(
+        watch(idle, (isIdle) => {
+          if (isIdle) {
+            if (timer.value) {
+              clearInterval(timer.value)
+              timer.value = null
+            }
+          } else {
+            // Resume immediately
+            startPositioning()
+            // Restart timer if not running
+            if (!timer.value) {
+              timer.value = setInterval(startPositioning, 30000)
+            }
           }
-        } else {
-          // Resume immediately
-          startPositioning()
-          // Restart timer if not running
-          if (!timer.value) {
-            timer.value = setInterval(startPositioning, 30000)
-          }
-        }
-      })
+        }),
+      )
     })
     .catch((e) => {
       console.error(e)
@@ -413,17 +440,27 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  isDisposed = true
+
+  stopHandles.splice(0).forEach((stop) => stop())
+
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
   if (timer.value) {
     clearInterval(timer.value)
+    timer.value = null
   }
   if (cluster.value) {
-    // Check if setMap exists (it should for plugins, but safer to check)
-    // Actually MarkerCluster has setMap(null) to remove it.
     cluster.value.setMap(null)
+    cluster.value = null
   }
   if (map.value) {
     map.value.destroy()
+    map.value = null
   }
+  selectedRestaurant.value = null
 })
 </script>
 
