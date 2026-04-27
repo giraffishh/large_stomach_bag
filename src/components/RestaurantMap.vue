@@ -312,7 +312,7 @@ onMounted(() => {
             }
 
             cluster.value = new AMap.MarkerCluster(map.value, points, {
-              gridSize: 15, // Reduced from 60 to make clustering less aggressive
+              gridSize: 20, // Reduced from 60 to make clustering less aggressive
               renderMarker: renderMarker,
               renderClusterMarker: renderClusterMarker,
             })

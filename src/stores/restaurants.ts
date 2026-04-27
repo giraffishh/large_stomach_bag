@@ -103,8 +103,8 @@ export const useRestaurantStore = defineStore('restaurants', () => {
         filtered = filtered.sort((a, b) => {
           // Level 1: City Match (If userCity is known)
           if (userCity.value) {
-            const isCityA = a.city.includes(userCity.value) || userCity.value.includes(a.city)
-            const isCityB = b.city.includes(userCity.value) || userCity.value.includes(b.city)
+            const isCityA = isSameCity(a.city, userCity.value)
+            const isCityB = isSameCity(b.city, userCity.value)
             if (isCityA && !isCityB) return -1
             if (!isCityA && isCityB) return 1
           }
@@ -193,4 +193,35 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function deg2rad(deg: number): number {
   return deg * (Math.PI / 180)
+}
+
+function isSameCity(restaurantCity: string, currentCity: string): boolean {
+  const normalizedRestaurantCity = normalizeCityName(restaurantCity)
+  const normalizedCurrentCity = normalizeCityName(currentCity)
+
+  if (!normalizedRestaurantCity || !normalizedCurrentCity) {
+    return false
+  }
+
+  return normalizedRestaurantCity === normalizedCurrentCity
+}
+
+function normalizeCityName(value: string): string {
+  const normalizedValue = value.replace(/\s+/g, '').trim()
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  const embeddedCityMatch = normalizedValue.match(/(?:^|省|自治区|特别行政区)([^省市区县旗]+市)/)
+  if (embeddedCityMatch?.[1]) {
+    return embeddedCityMatch[1].replace(/市$/, '')
+  }
+
+  const municipalityMatch = normalizedValue.match(/(北京|上海|天津|重庆|香港|澳门)/)
+  if (municipalityMatch?.[1]) {
+    return municipalityMatch[1]
+  }
+
+  return normalizedValue.replace(/(特别行政区|自治区|自治州|地区|盟|省|市)$/, '')
 }
