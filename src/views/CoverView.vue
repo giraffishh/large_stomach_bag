@@ -32,7 +32,13 @@ const navigateToHome = () => {
 
   // 如果有重定向目标则跳转，否则去主页
   const redirect = route.query.redirect as string
-  router.replace(redirect || '/home')
+  if (redirect) {
+    router.replace(redirect)
+    return
+  }
+
+  const { redirect: _redirect, ...query } = route.query
+  router.replace({ path: '/home', query })
 }
 
 // --- 滚轮事件：向下滚动触发导航 ---

@@ -7,8 +7,10 @@ import HomeSearchBar from '@/components/home/HomeSearchBar.vue'
 import RestaurantFilterDropdown from '@/components/home/RestaurantFilterDropdown.vue'
 import RestaurantSortDropdown from '@/components/home/RestaurantSortDropdown.vue'
 import SelectedFilterChips from '@/components/home/SelectedFilterChips.vue'
+import { useFilterQuerySync } from '@/composables/useFilterQuerySync'
 
 const RestaurantMap = defineAsyncComponent(() => import('@/components/RestaurantMap.vue'))
+useFilterQuerySync()
 
 let locationTimer: ReturnType<typeof setTimeout> | null = null
 let isDisposed = false

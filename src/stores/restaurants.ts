@@ -24,6 +24,9 @@ export interface Restaurant {
 
 export const useRestaurantStore = defineStore('restaurants', () => {
   const restaurants = shallowRef<Restaurant[]>(restaurantData as Restaurant[])
+  const searchTextById = new Map(
+    restaurants.value.map((restaurant) => [restaurant.id, buildSearchText(restaurant)]),
+  )
   const searchQuery = ref('')
   const selectedCities = ref<string[]>([])
   const selectedTags = ref<string[]>([])
@@ -107,12 +110,10 @@ export const useRestaurantStore = defineStore('restaurants', () => {
   }
 
   const filteredRestaurants = computed(() => {
+    const q = searchQuery.value.trim().toLowerCase()
+
     let filtered = restaurants.value.filter((r) => {
-      const q = searchQuery.value.toLowerCase()
-      const matchesSearch =
-        r.name.toLowerCase().includes(q) ||
-        r.review.toLowerCase().includes(q) ||
-        r.shareLink.toLowerCase().includes(q)
+      const matchesSearch = q === '' || searchTextById.get(r.id)?.includes(q) === true
 
       const matchesCity =
         selectedCities.value.length === 0 ||
@@ -238,4 +239,17 @@ function formatDistance(distanceInKm: number): string {
   }
 
   return `${distanceInKm.toFixed(1)}km`
+}
+
+function buildSearchText(restaurant: Restaurant): string {
+  return [
+    restaurant.name,
+    restaurant.review,
+    restaurant.shareLink,
+    restaurant.location,
+    restaurant.city,
+    restaurant.tags.join(' '),
+  ]
+    .join('\n')
+    .toLowerCase()
 }
