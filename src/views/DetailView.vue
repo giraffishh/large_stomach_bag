@@ -33,7 +33,7 @@ const goBack = () => {
   const back = window.history.state?.back
 
   if (typeof back === 'string' && back.startsWith('/')) {
-    router.back()
+    router.replace(back)
     return
   }
 

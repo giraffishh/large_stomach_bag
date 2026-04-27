@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia'
 import { List, Map, Moon, Search, Sun } from 'lucide-vue-next'
 import { useDark } from '@vueuse/core'
 import { useRestaurantStore } from '@/stores/restaurants'
+import { syncThemeChrome } from '@/utils/themeChrome'
 
 const store = useRestaurantStore()
 const { searchQuery, isMapView } = storeToRefs(store)
@@ -25,6 +26,7 @@ const toggleDarkMode = (event: MouseEvent) => {
 
   if (!target || !documentWithTransition.startViewTransition || prefersReducedMotion) {
     isDark.value = nextTheme
+    syncThemeChrome(nextTheme)
     return
   }
 
@@ -44,6 +46,7 @@ const toggleDarkMode = (event: MouseEvent) => {
 
   const transition = documentWithTransition.startViewTransition(() => {
     isDark.value = nextTheme
+    syncThemeChrome(nextTheme)
   })
 
   transition.finished.finally(() => {

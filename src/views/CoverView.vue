@@ -9,10 +9,23 @@ const route = useRoute()
 // 防止重复导航
 const isNavigating = ref(false)
 let homePreloadTimer: ReturnType<typeof setTimeout> | null = null
+let touchStartY = 0
+let touchStartX = 0
+
+const lockScrollDuringNavigation = () => {
+  document.documentElement.classList.add('cover-route-lock')
+  window.scrollTo(0, 0)
+
+  window.setTimeout(() => {
+    window.scrollTo(0, 0)
+    document.documentElement.classList.remove('cover-route-lock')
+  }, 720)
+}
 
 const navigateToHome = () => {
   if (isNavigating.value) return
   isNavigating.value = true
+  lockScrollDuringNavigation()
 
   // 标记用户已访问过封面
   sessionStorage.setItem('hasVisitedCover', 'true')
@@ -32,11 +45,16 @@ const handleWheel = (e: WheelEvent) => {
 }
 
 // --- 触摸事件：向上滑动触发导航 ---
-let touchStartY = 0
-
 const handleTouchStart = (e: TouchEvent) => {
   if (e.touches[0]) {
     touchStartY = e.touches[0].clientY
+    touchStartX = e.touches[0].clientX
+  }
+}
+
+const handleTouchMove = (e: TouchEvent) => {
+  if (e.cancelable) {
+    e.preventDefault()
   }
 }
 
@@ -44,8 +62,9 @@ const handleTouchEnd = (e: TouchEvent) => {
   const touch = e.changedTouches[0]
   if (!touch) return
   const deltaY = touchStartY - touch.clientY
+  const deltaX = Math.abs(touchStartX - touch.clientX)
   // deltaY > 50 表示用户向上滑动了足够的距离
-  if (deltaY > 50) {
+  if (deltaY > 54 && deltaY > deltaX * 1.2) {
     navigateToHome()
   }
 }
@@ -61,6 +80,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 onMounted(() => {
   window.addEventListener('wheel', handleWheel, { passive: false })
   window.addEventListener('touchstart', handleTouchStart, { passive: true })
+  window.addEventListener('touchmove', handleTouchMove, { passive: false })
   window.addEventListener('touchend', handleTouchEnd, { passive: true })
   window.addEventListener('keydown', handleKeyDown)
 
@@ -73,6 +93,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('wheel', handleWheel)
   window.removeEventListener('touchstart', handleTouchStart)
+  window.removeEventListener('touchmove', handleTouchMove)
   window.removeEventListener('touchend', handleTouchEnd)
   window.removeEventListener('keydown', handleKeyDown)
 
@@ -92,7 +113,12 @@ onBeforeUnmount(() => {
 <style scoped>
 .cover-view {
   /* 防止出现滚动条 */
+  position: fixed;
+  inset: 0;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 </style>

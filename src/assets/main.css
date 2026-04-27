@@ -23,6 +23,19 @@ body {
   min-width: 320px;
 }
 
+html.cover-route-lock,
+html.cover-route-lock body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+html.cover-route-lock #app {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .theme-dimmable-image {
   transition: filter 200ms ease;
 }
