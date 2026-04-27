@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRestaurantStore } from '@/stores/restaurants'
+import { formatCityLabel, isSameCity, normalizeCityName } from '@/utils/city'
 
 export type PriceRange = {
   min: number
@@ -8,7 +9,7 @@ export type PriceRange = {
 }
 
 export type SelectedRestaurantFilter = {
-  type: 'rating' | 'price' | 'tag'
+  type: 'city' | 'rating' | 'price' | 'tag'
   value: string | PriceRange
   label: string
 }
@@ -25,7 +26,18 @@ export const priceOptions = [
 
 export function useRestaurantFilters() {
   const store = useRestaurantStore()
-  const { selectedTags, selectedRatings, priceRanges } = storeToRefs(store)
+  const { selectedCities, selectedTags, selectedRatings, priceRanges } = storeToRefs(store)
+
+  const toggleCity = (city: string) => {
+    const cityKey = normalizeCityName(city)
+    const index = selectedCities.value.findIndex((selectedCity) => isSameCity(selectedCity, cityKey))
+
+    if (index !== -1) {
+      selectedCities.value.splice(index, 1)
+    } else {
+      selectedCities.value.push(city)
+    }
+  }
 
   const toggleTag = (tag: string) => {
     if (selectedTags.value.includes(tag)) {
@@ -67,6 +79,7 @@ export function useRestaurantFilters() {
   }
 
   const clearAllFilters = () => {
+    selectedCities.value = []
     selectedTags.value = []
     selectedRatings.value = []
     priceRanges.value = []
@@ -74,6 +87,10 @@ export function useRestaurantFilters() {
 
   const allSelectedFilters = computed<SelectedRestaurantFilter[]>(() => {
     const filters: SelectedRestaurantFilter[] = []
+
+    selectedCities.value.forEach((city) => {
+      filters.push({ type: 'city', value: city, label: formatCityLabel(city) })
+    })
 
     selectedRatings.value.forEach((rating) => {
       filters.push({ type: 'rating', value: rating, label: rating })
@@ -95,7 +112,9 @@ export function useRestaurantFilters() {
   })
 
   const removeFilter = (filter: SelectedRestaurantFilter) => {
-    if (filter.type === 'rating') {
+    if (filter.type === 'city') {
+      toggleCity(filter.value as string)
+    } else if (filter.type === 'rating') {
       toggleRating(filter.value as string)
     } else if (filter.type === 'price') {
       togglePriceRange(filter.value as PriceRange)
@@ -108,6 +127,7 @@ export function useRestaurantFilters() {
     ratings,
     priceOptions,
     allSelectedFilters,
+    toggleCity,
     toggleTag,
     toggleRating,
     togglePriceRange,

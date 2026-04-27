@@ -45,6 +45,7 @@ src/
 │  ├─ useImageFallback.ts          # Runtime image fallback chain for coverUrl -> cover -> placeholder
 │  └─ useRestaurantFilters.ts      # Shared filter options and filter mutation helpers
 ├─ utils/
+│  ├─ city.ts                      # City normalization, matching, and display helpers
 │  └─ restaurant.ts                # Restaurant address, image source, and Dianping URL helpers
 ├─ views/
 │  ├─ CoverView.vue                # Entry page interactions and cover navigation

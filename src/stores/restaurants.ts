@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import restaurantData from '@/data/restaurants.json'
+import { isSameCity, normalizeCityName } from '@/utils/city'
 
 export interface Restaurant {
   id: string
@@ -24,6 +25,7 @@ export interface Restaurant {
 export const useRestaurantStore = defineStore('restaurants', () => {
   const restaurants = ref<Restaurant[]>(restaurantData as Restaurant[])
   const searchQuery = ref('')
+  const selectedCities = ref<string[]>([])
   const selectedTags = ref<string[]>([])
   const selectedRatings = ref<string[]>([])
   const priceRanges = ref<{ min: number; max: number }[]>([])
@@ -68,6 +70,22 @@ export const useRestaurantStore = defineStore('restaurants', () => {
     return Array.from(tags)
   })
 
+  const allCities = computed(() => {
+    const seen = new Set<string>()
+
+    return restaurants.value
+      .map((restaurant) => restaurant.city)
+      .filter((city) => {
+        const normalizedCity = normalizeCityName(city)
+        if (!normalizedCity || seen.has(normalizedCity)) {
+          return false
+        }
+
+        seen.add(normalizedCity)
+        return true
+      })
+  })
+
   const ratingOrder: { [key: string]: number } = {
     夯: 4,
     人上人: 3,
@@ -83,6 +101,10 @@ export const useRestaurantStore = defineStore('restaurants', () => {
         r.review.toLowerCase().includes(q) ||
         r.shareLink.toLowerCase().includes(q)
 
+      const matchesCity =
+        selectedCities.value.length === 0 ||
+        selectedCities.value.some((city) => isSameCity(r.city, city))
+
       const matchesTags =
         selectedTags.value.length === 0 || selectedTags.value.some((tag) => r.tags.includes(tag))
 
@@ -93,7 +115,7 @@ export const useRestaurantStore = defineStore('restaurants', () => {
         priceRanges.value.length === 0 ||
         priceRanges.value.some((range) => r.price >= range.min && r.price <= range.max)
 
-      return matchesSearch && matchesTags && matchesRating && matchesPrice
+      return matchesSearch && matchesCity && matchesTags && matchesRating && matchesPrice
     })
 
     // Sorting logic
@@ -101,8 +123,8 @@ export const useRestaurantStore = defineStore('restaurants', () => {
       case 'default':
         // Sort by City Match first, then Tags/Date
         filtered = filtered.sort((a, b) => {
-          // Level 1: City Match (If userCity is known)
-          if (userCity.value) {
+          // Level 1: City Match (only when no explicit city filter is active)
+          if (userCity.value && selectedCities.value.length === 0) {
             const isCityA = isSameCity(a.city, userCity.value)
             const isCityB = isSameCity(b.city, userCity.value)
             if (isCityA && !isCityB) return -1
@@ -162,6 +184,7 @@ export const useRestaurantStore = defineStore('restaurants', () => {
   return {
     restaurants,
     searchQuery,
+    selectedCities,
     selectedTags,
     selectedRatings,
     priceRanges,
@@ -174,6 +197,7 @@ export const useRestaurantStore = defineStore('restaurants', () => {
     setUserCity,
     setMapState,
     getDistance,
+    allCities,
     allTags,
     filteredRestaurants,
   }
@@ -193,35 +217,4 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function deg2rad(deg: number): number {
   return deg * (Math.PI / 180)
-}
-
-function isSameCity(restaurantCity: string, currentCity: string): boolean {
-  const normalizedRestaurantCity = normalizeCityName(restaurantCity)
-  const normalizedCurrentCity = normalizeCityName(currentCity)
-
-  if (!normalizedRestaurantCity || !normalizedCurrentCity) {
-    return false
-  }
-
-  return normalizedRestaurantCity === normalizedCurrentCity
-}
-
-function normalizeCityName(value: string): string {
-  const normalizedValue = value.replace(/\s+/g, '').trim()
-
-  if (!normalizedValue) {
-    return ''
-  }
-
-  const embeddedCityMatch = normalizedValue.match(/(?:^|省|自治区|特别行政区)([^省市区县旗]+市)/)
-  if (embeddedCityMatch?.[1]) {
-    return embeddedCityMatch[1].replace(/市$/, '')
-  }
-
-  const municipalityMatch = normalizedValue.match(/(北京|上海|天津|重庆|香港|澳门)/)
-  if (municipalityMatch?.[1]) {
-    return municipalityMatch[1]
-  }
-
-  return normalizedValue.replace(/(特别行政区|自治区|自治州|地区|盟|省|市)$/, '')
 }

@@ -2,17 +2,19 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { onClickOutside } from '@vueuse/core'
-import { Check, Filter, Search } from 'lucide-vue-next'
+import { Check, Filter, Search, Trash2 } from 'lucide-vue-next'
 import { useRestaurantStore } from '@/stores/restaurants'
 import { useRestaurantFilters } from '@/composables/useRestaurantFilters'
+import { formatCityLabel, isSameCity, normalizeCityName } from '@/utils/city'
 
 const store = useRestaurantStore()
-const { allTags, filteredRestaurants, priceRanges, selectedRatings, selectedTags } =
+const { allTags, filteredRestaurants, priceRanges, restaurants, selectedCities, selectedRatings, selectedTags, userCity } =
   storeToRefs(store)
 
 const {
   ratings,
   priceOptions,
+  toggleCity,
   toggleTag,
   toggleRating,
   togglePriceRange,
@@ -31,7 +33,12 @@ onClickOutside(filterMenuRef, () => {
 })
 
 const activeFilterCount = computed(() => {
-  return selectedRatings.value.length + selectedTags.value.length + priceRanges.value.length
+  return (
+    selectedCities.value.length +
+    selectedRatings.value.length +
+    selectedTags.value.length +
+    priceRanges.value.length
+  )
 })
 
 const filteredTags = computed(() => {
@@ -49,6 +56,71 @@ const clearFilters = () => {
   clearAllFilters()
   customMin.value = ''
   customMax.value = ''
+}
+
+const hasCurrentCityOption = computed(() => {
+  return Boolean(userCity.value?.trim())
+})
+
+const isCityActive = (city: string) => {
+  return selectedCities.value.some((selectedCity) => isSameCity(selectedCity, city))
+}
+
+const cityOptions = computed(() => {
+  const cityMap = new Map<string, { value: string; label: string; count: number }>()
+
+  restaurants.value.forEach((restaurant) => {
+    const normalizedCity = normalizeCityName(restaurant.city)
+    if (!normalizedCity) {
+      return
+    }
+
+    const existing = cityMap.get(normalizedCity)
+    if (existing) {
+      existing.count += 1
+      return
+    }
+
+    cityMap.set(normalizedCity, {
+      value: restaurant.city,
+      label: formatCityLabel(restaurant.city),
+      count: 1,
+    })
+  })
+
+  const options = Array.from(cityMap.values()).sort((a, b) => b.count - a.count)
+
+  if (!hasCurrentCityOption.value) {
+    return options
+  }
+
+  const currentCity = userCity.value
+  const currentCityIndex = options.findIndex((option) => isSameCity(option.value, currentCity))
+
+  if (currentCityIndex !== -1) {
+    const currentOption = options[currentCityIndex]
+    if (currentOption) {
+      options.splice(currentCityIndex, 1)
+      options.unshift({
+        ...currentOption,
+        value: currentCity,
+        label: formatCityLabel(currentCity),
+      })
+      return options
+    }
+  }
+
+  options.unshift({
+    value: currentCity,
+    label: formatCityLabel(currentCity),
+    count: 0,
+  })
+
+  return options
+})
+
+const isCurrentCityOption = (city: string) => {
+  return Boolean(userCity.value?.trim()) && isSameCity(city, userCity.value)
 }
 </script>
 
@@ -78,16 +150,15 @@ const clearFilters = () => {
       v-if="showFilterMenu"
       class="absolute top-full left-0 mt-2 w-[calc(100vw-32px)] md:w-[480px] max-w-[480px] bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 z-50 flex flex-col max-h-[75vh] overflow-hidden"
     >
-      <div class="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800">
-        <h3 class="font-bold text-zinc-900 dark:text-zinc-100">筛选条件</h3>
-        <button
-          v-if="activeFilterCount > 0"
-          @click="clearFilters"
-          class="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
-        >
-          清空全部
-        </button>
-      </div>
+      <button
+        v-if="activeFilterCount > 0"
+        @click="clearFilters"
+        class="absolute top-2 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
+        aria-label="清空全部筛选"
+        title="清空全部筛选"
+      >
+        <Trash2 :size="16" />
+      </button>
 
       <div class="overflow-y-auto custom-scrollbar p-4 space-y-6">
         <section>
@@ -134,6 +205,30 @@ const clearFilters = () => {
                 "
                 :size="14"
               />
+            </button>
+          </div>
+        </section>
+
+        <section>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-sm font-bold text-zinc-900 dark:text-zinc-100">城市</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="city in cityOptions"
+              :key="city.label"
+              @click="toggleCity(city.value)"
+              class="px-3 py-1.5 text-xs rounded-lg border transition-all flex items-center gap-1"
+              :class="
+                isCityActive(city.value)
+                  ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900'
+                  : isCurrentCityOption(city.value)
+                    ? 'bg-white border-zinc-300 ring-1 ring-zinc-200 text-zinc-700 hover:border-zinc-400 dark:bg-zinc-800 dark:border-zinc-600 dark:ring-zinc-700 dark:text-zinc-300'
+                    : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400'
+              "
+            >
+              <span>{{ city.label }}</span>
+              <span class="text-[11px] opacity-70">{{ city.count }}</span>
             </button>
           </div>
         </section>
@@ -211,7 +306,7 @@ const clearFilters = () => {
               class="px-3 py-1.5 text-xs rounded-lg border transition-all flex items-center gap-1"
               :class="
                 selectedTags.includes(tag)
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400'
+                  ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900'
                   : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400'
               "
             >
