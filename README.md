@@ -42,9 +42,10 @@ src/
 │  └─ restaurants.json             # Generated restaurant dataset from Notion sync
 ├─ composables/
 │  ├─ useAMap.ts                   # AMap loader, city lookup, and user geolocation
+│  ├─ useImageFallback.ts          # Runtime image fallback chain for coverUrl -> cover -> placeholder
 │  └─ useRestaurantFilters.ts      # Shared filter options and filter mutation helpers
 ├─ utils/
-│  └─ restaurant.ts                # Restaurant address and Dianping URL parsing helpers
+│  └─ restaurant.ts                # Restaurant address, image source, and Dianping URL helpers
 ├─ views/
 │  ├─ CoverView.vue                # Entry page interactions and cover navigation
 │  ├─ HomeView.vue                 # Home page layout: search/filter toolbar plus list/map view

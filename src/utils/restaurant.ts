@@ -1,6 +1,7 @@
 import type { Restaurant } from '@/stores/restaurants'
 
 type RestaurantLocationSource = Pick<Restaurant, 'location' | 'shareLink'>
+type RestaurantImageSource = Pick<Restaurant, 'cover' | 'coverUrl'>
 
 const URL_PATTERN = /https?:\/\/[^\s\])]+/
 
@@ -32,4 +33,11 @@ export function extractMapUrl(text?: string): string {
 
   const match = text.match(URL_PATTERN)
   return match ? match[0] : ''
+}
+
+export function getRestaurantImageSources(
+  restaurant: RestaurantImageSource | null | undefined,
+  placeholder: string,
+): string[] {
+  return [...new Set([restaurant?.coverUrl || '', restaurant?.cover || '', placeholder].filter(Boolean))]
 }

@@ -4,7 +4,8 @@ import { useRestaurantStore } from '@/stores/restaurants'
 import { computed } from 'vue'
 import { ArrowLeft, MapPin, ExternalLink } from 'lucide-vue-next'
 import RatingBadge from '@/components/RatingBadge.vue'
-import { extractMapUrl, getDisplayAddress } from '@/utils/restaurant'
+import { useImageFallback } from '@/composables/useImageFallback'
+import { extractMapUrl, getDisplayAddress, getRestaurantImageSources } from '@/utils/restaurant'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +24,11 @@ const mapUrl = computed(() => {
   return extractMapUrl(restaurant.value?.shareLink)
 })
 
+const imagePlaceholder = 'https://placehold.co/800x600?text=No+Image'
+const { imageSrc, handleImageError } = useImageFallback(() =>
+  getRestaurantImageSources(restaurant.value, imagePlaceholder),
+)
+
 const goBack = () => {
   const back = window.history.state?.back
 
@@ -40,9 +46,10 @@ const goBack = () => {
     <!-- Hero Image -->
     <div class="relative h-64 md:h-96 w-full overflow-hidden">
       <img
-        :src="restaurant.coverUrl || restaurant.cover || 'https://placehold.co/800x600'"
+        :src="imageSrc"
         class="theme-dimmable-image w-full h-full object-cover"
         :alt="`${restaurant.name} 封面图片`"
+        @error="handleImageError"
         v-motion
         :initial="{ scale: 1.1 }"
         :enter="{ scale: 1 }"

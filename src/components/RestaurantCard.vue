@@ -4,7 +4,8 @@ import { useRestaurantStore } from '@/stores/restaurants'
 import RatingBadge from './RatingBadge.vue'
 import { MapPin, ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
-import { getDisplayAddress } from '@/utils/restaurant'
+import { useImageFallback } from '@/composables/useImageFallback'
+import { getDisplayAddress, getRestaurantImageSources } from '@/utils/restaurant'
 
 const props = withDefaults(
   defineProps<{
@@ -19,6 +20,10 @@ const props = withDefaults(
 const store = useRestaurantStore()
 
 const displayAddress = computed(() => getDisplayAddress(props.restaurant))
+const imagePlaceholder = 'https://placehold.co/600x400?text=No+Image'
+const { imageSrc, handleImageError } = useImageFallback(() =>
+  getRestaurantImageSources(props.restaurant, imagePlaceholder),
+)
 </script>
 
 <template>
@@ -33,11 +38,10 @@ const displayAddress = computed(() => getDisplayAddress(props.restaurant))
     <!-- Cover Image -->
     <div class="w-28 md:w-48 lg:w-64 shrink-0 overflow-hidden relative self-stretch">
       <img
-        :src="
-          restaurant.coverUrl || restaurant.cover || 'https://placehold.co/600x400?text=No+Image'
-        "
+        :src="imageSrc"
         loading="lazy"
         alt="Cover"
+        @error="handleImageError"
         class="theme-dimmable-image absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       />
     </div>
