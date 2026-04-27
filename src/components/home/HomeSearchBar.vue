@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { List, Map, Moon, Search, Sun } from 'lucide-vue-next'
+import { ChartColumn, List, Map, Moon, Search, Sun } from 'lucide-vue-next'
 import { useDark } from '@vueuse/core'
+import { useRouter } from 'vue-router'
 import { useRestaurantStore } from '@/stores/restaurants'
 import { syncThemeChrome } from '@/utils/themeChrome'
 
 const store = useRestaurantStore()
 const { searchQuery, isMapView } = storeToRefs(store)
+const router = useRouter()
 
 const isDark = useDark()
 
@@ -56,7 +58,7 @@ const toggleDarkMode = (event: MouseEvent) => {
 </script>
 
 <template>
-  <div class="flex items-center gap-3 mb-2">
+  <div class="flex items-center gap-2.5 mb-2">
     <div class="relative group grow">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <Search
@@ -70,27 +72,37 @@ const toggleDarkMode = (event: MouseEvent) => {
         placeholder="搜索餐厅、评价、地址..."
       />
     </div>
-    <button
-      @click="isMapView = !isMapView"
-      class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0"
-      :title="isMapView ? '切换到列表视图' : '切换到地图视图'"
-      :aria-label="isMapView ? '切换到列表视图' : '切换到地图视图'"
-    >
-      <component :is="isMapView ? List : Map" :size="18" class="md:w-5 md:h-5" />
-    </button>
-    <button
-      @click="toggleDarkMode"
-      class="group/theme p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0 overflow-hidden"
-      :aria-label="isDark ? '切换到亮色模式' : '切换到暗色模式'"
-      :aria-pressed="isDark"
-    >
-      <component
-        :is="isDark ? Moon : Sun"
-        :key="isDark ? 'moon' : 'sun'"
-        :size="18"
-        class="theme-toggle-icon md:w-5 md:h-5"
-      />
-    </button>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button
+        @click="isMapView = !isMapView"
+        class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0"
+        :title="isMapView ? '切换到列表视图' : '切换到地图视图'"
+        :aria-label="isMapView ? '切换到列表视图' : '切换到地图视图'"
+      >
+        <component :is="isMapView ? List : Map" :size="18" class="md:w-5 md:h-5" />
+      </button>
+      <button
+        @click="router.push('/stats')"
+        class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0"
+        title="查看统计"
+        aria-label="查看统计"
+      >
+        <ChartColumn :size="18" class="md:w-5 md:h-5" />
+      </button>
+      <button
+        @click="toggleDarkMode"
+        class="group/theme p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0 overflow-hidden"
+        :aria-label="isDark ? '切换到亮色模式' : '切换到暗色模式'"
+        :aria-pressed="isDark"
+      >
+        <component
+          :is="isDark ? Moon : Sun"
+          :key="isDark ? 'moon' : 'sun'"
+          :size="18"
+          class="theme-toggle-icon md:w-5 md:h-5"
+        />
+      </button>
+    </div>
   </div>
 </template>
 

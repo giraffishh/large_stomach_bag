@@ -105,6 +105,7 @@ const { filteredRestaurants, isMapView } = storeToRefs(store)
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
+  height: 3px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #e4e4e7;

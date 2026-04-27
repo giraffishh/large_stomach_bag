@@ -24,6 +24,11 @@ const router = createRouter({
       meta: { transition: 'slide-up' },
     },
     {
+      path: '/stats',
+      name: 'stats',
+      component: () => import('../views/StatsView.vue'),
+    },
+    {
       path: '/restaurant/:id',
       name: 'detail',
       component: () => import('../views/DetailView.vue'),
@@ -67,7 +72,15 @@ function resolveRouteTransition(
     return 'detail-forward'
   }
 
+  if (from.name === 'home' && to.name === 'stats') {
+    return 'detail-forward'
+  }
+
   if (from.name === 'detail' && to.name === 'home') {
+    return 'detail-back'
+  }
+
+  if (from.name === 'stats' && to.name === 'home') {
     return 'detail-back'
   }
 
