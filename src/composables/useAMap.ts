@@ -34,6 +34,7 @@ export function useAMap() {
       plugins: [
         'AMap.ControlBar',
         'AMap.Geolocation',
+        'AMap.Geocoder',
         'AMap.CitySearch',
         'AMap.TileLayer.Traffic',
         'AMap.IndoorMap',
@@ -77,6 +78,7 @@ export function useAMap() {
       // 2. Precise Geolocation - Slower but accurate
       const geolocation = new AMap.Geolocation({
         enableHighAccuracy: true,
+        extensions: 'all',
         timeout: 10000,
         buttonPosition: 'RB',
         zoomToAccuracy: false, // We handle zoom manually in Map component
@@ -85,13 +87,26 @@ export function useAMap() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       geolocation.getCurrentPosition((status: string, result: any) => {
         if (status === 'complete') {
-          // Update Store with precise location
-          store.setUserLocation(result.position.lat, result.position.lng)
+          const position = getPositionCoordinates(result?.position)
+          if (!position) {
+            console.warn('[useAMap] Geolocation succeeded without coordinates', result)
+            return
+          }
 
-          const city = resolveGeolocationCity(result, store.userCity)
+          // Update Store with precise location
+          store.setUserLocation(position.lat, position.lng)
+
+          const city = resolveGeolocationCity(result)
           if (city) {
             store.setUserCity(city)
+            return
           }
+
+          resolveCityFromCoordinates(AMap, position.lng, position.lat).then((resolvedCity) => {
+            if (resolvedCity) {
+              store.setUserCity(resolvedCity)
+            }
+          })
         } else {
           console.warn('[useAMap] Geolocation failed/timeout', result)
         }
@@ -111,7 +126,6 @@ export function useAMap() {
 function resolveGeolocationCity(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any,
-  fallbackCity = '',
 ): string {
   const directCity = pickFirstCity(result?.addressComponent?.city)
   if (directCity) {
@@ -133,7 +147,54 @@ function resolveGeolocationCity(
     return province
   }
 
-  return fallbackCity
+  return ''
+}
+
+function getPositionCoordinates(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  position: any,
+): { lng: number; lat: number } | null {
+  const lng = Number(
+    position?.lng ??
+      position?.[0] ??
+      (typeof position?.getLng === 'function' ? position.getLng() : NaN),
+  )
+  const lat = Number(
+    position?.lat ??
+      position?.[1] ??
+      (typeof position?.getLat === 'function' ? position.getLat() : NaN),
+  )
+
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+    return null
+  }
+
+  return { lng, lat }
+}
+
+function resolveCityFromCoordinates(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  AMap: any,
+  lng: number,
+  lat: number,
+): Promise<string> {
+  if (!AMap?.Geocoder) {
+    return Promise.resolve('')
+  }
+
+  return new Promise((resolve) => {
+    const geocoder = new AMap.Geocoder({ extensions: 'all' })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    geocoder.getAddress([lng, lat], (status: string, result: any) => {
+      if (status !== 'complete' || !result?.regeocode) {
+        resolve('')
+        return
+      }
+
+      resolve(resolveGeolocationCity(result.regeocode))
+    })
+  })
 }
 
 function pickFirstCity(city: string | string[] | undefined): string {
@@ -155,17 +216,14 @@ function extractCityFromText(text: string | undefined): string {
     return cityMatch[0]
   }
 
-  const municipalityMatch = normalizedText.match(/(北京市|上海市|天津市|重庆市|香港特别行政区|澳门特别行政区)/)
+  const municipalityMatch = normalizedText.match(
+    /(北京市|上海市|天津市|重庆市|香港特别行政区|澳门特别行政区)/,
+  )
   return municipalityMatch?.[1] || ''
 }
 
 function isMunicipality(value: string): boolean {
-  return [
-    '北京市',
-    '上海市',
-    '天津市',
-    '重庆市',
-    '香港特别行政区',
-    '澳门特别行政区',
-  ].includes(value)
+  return ['北京市', '上海市', '天津市', '重庆市', '香港特别行政区', '澳门特别行政区'].includes(
+    value,
+  )
 }

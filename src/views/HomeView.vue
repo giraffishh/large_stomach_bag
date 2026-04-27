@@ -50,15 +50,22 @@ const { filteredRestaurants, isMapView } = storeToRefs(store)
       <div v-if="isMapView" class="w-full">
         <RestaurantMap />
       </div>
-      <div v-else class="space-y-4">
+      <div v-else>
         <div v-if="filteredRestaurants.length === 0" class="text-center py-20 text-zinc-400">
           <p>没有找到相关餐厅...</p>
         </div>
-        <RestaurantCard
-          v-for="restaurant in filteredRestaurants"
-          :key="restaurant.id"
-          :restaurant="restaurant"
-        />
+        <TransitionGroup
+          v-else
+          name="restaurant-list"
+          tag="div"
+          class="restaurant-list flex flex-col gap-4"
+        >
+          <RestaurantCard
+            v-for="restaurant in filteredRestaurants"
+            :key="restaurant.id"
+            :restaurant="restaurant"
+          />
+        </TransitionGroup>
       </div>
     </section>
   </main>
@@ -81,5 +88,34 @@ const { filteredRestaurants, isMapView } = storeToRefs(store)
 }
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #3f3f46;
+}
+.restaurant-list {
+  position: relative;
+}
+.restaurant-list-move,
+.restaurant-list-enter-active,
+.restaurant-list-leave-active {
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease;
+}
+.restaurant-list-enter-from,
+.restaurant-list-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+.restaurant-list-leave-active {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .restaurant-list-move,
+  .restaurant-list-enter-active,
+  .restaurant-list-leave-active {
+    transition: none;
+  }
 }
 </style>

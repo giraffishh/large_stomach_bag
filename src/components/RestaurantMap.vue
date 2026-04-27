@@ -17,6 +17,7 @@ const timer = ref<ReturnType<typeof setInterval> | null>(null)
 const userPosition = ref<any>(null)
 const selectedRestaurant = ref<Restaurant | null>(null)
 const isCardInteractable = ref(false)
+const hideMarkerLabels = ref(false)
 const stopHandles: WatchStopHandle[] = []
 
 const router = useRouter()
@@ -26,6 +27,7 @@ const { initAMap } = useAMap()
 const isDark = useDark()
 const lightStyle = 'amap://styles/7bea9294d71af33c16de9b52c2a16db6'
 const darkStyle = 'amap://styles/blue'
+const markerLabelMinZoom = 11
 
 // Detect user inactivity (5 minutes = 300000 ms)
 const { idle } = useIdle(5 * 60 * 1000)
@@ -84,6 +86,11 @@ const registerStopHandle = (stopHandle: WatchStopHandle) => {
 
 const hasActiveMap = () => {
   return !isDisposed && !!map.value && !!mapContainer.value
+}
+
+const updateMarkerLabelVisibility = () => {
+  if (!hasActiveMap()) return
+  hideMarkerLabels.value = map.value.getZoom() < markerLabelMinZoom
 }
 
 // Smooth Pan & Zoom Animation Helper for 2D Map
@@ -195,6 +202,8 @@ onMounted(() => {
       }
       map.value.on('moveend', saveState)
       map.value.on('zoomend', saveState)
+      map.value.on('zoomend', updateMarkerLabelVisibility)
+      updateMarkerLabelVisibility()
 
       // Watch for dark mode changes
       registerStopHandle(
@@ -470,7 +479,11 @@ onUnmounted(() => {
     <div
       class="relative w-full h-[calc(100vh-135px)] md:h-[600px] md:rounded-xl overflow-hidden md:shadow-sm md:border border-zinc-200 dark:border-zinc-700"
     >
-      <div ref="mapContainer" class="w-full h-full"></div>
+      <div
+        ref="mapContainer"
+        class="w-full h-full"
+        :class="{ 'marker-labels-hidden': hideMarkerLabels }"
+      ></div>
 
       <!-- Custom Geolocation Button -->
       <button
@@ -609,6 +622,10 @@ onUnmounted(() => {
   align-items: center;
   margin-left: 4px;
   /* Removed background and border for a cleaner look */
+}
+
+.marker-labels-hidden :deep(.marker-info) {
+  display: none;
 }
 
 :deep(.restaurant-name) {
