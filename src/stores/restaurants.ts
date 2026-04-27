@@ -1,6 +1,6 @@
 // src/stores/restaurants.ts
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
 import restaurantData from '@/data/restaurants.json'
 import { isSameCity, normalizeCityName } from '@/utils/city'
 
@@ -23,7 +23,7 @@ export interface Restaurant {
 }
 
 export const useRestaurantStore = defineStore('restaurants', () => {
-  const restaurants = ref<Restaurant[]>(restaurantData as Restaurant[])
+  const restaurants = shallowRef<Restaurant[]>(restaurantData as Restaurant[])
   const searchQuery = ref('')
   const selectedCities = ref<string[]>([])
   const selectedTags = ref<string[]>([])
@@ -47,20 +47,33 @@ export const useRestaurantStore = defineStore('restaurants', () => {
     mapState.value = { center, zoom }
   }
 
+  const distanceLabels = computed(() => {
+    if (!userLocation.value) {
+      return new Map<string, string>()
+    }
+
+    const labels = new Map<string, string>()
+
+    restaurants.value.forEach((restaurant) => {
+      if (!restaurant.latitude || !restaurant.longitude) {
+        return
+      }
+
+      const dist = calculateDistance(
+        userLocation.value!.lat,
+        userLocation.value!.lng,
+        restaurant.latitude,
+        restaurant.longitude,
+      )
+
+      labels.set(restaurant.id, formatDistance(dist))
+    })
+
+    return labels
+  })
+
   const getDistance = (restaurant: Restaurant): string | null => {
-    if (!userLocation.value || !restaurant.latitude || !restaurant.longitude) {
-      return null
-    }
-    const dist = calculateDistance(
-      userLocation.value.lat,
-      userLocation.value.lng,
-      restaurant.latitude,
-      restaurant.longitude,
-    )
-    if (dist < 1) {
-      return `${Math.round(dist * 1000)}m`
-    }
-    return `${dist.toFixed(1)}km`
+    return distanceLabels.value.get(restaurant.id) || null
   }
 
   // Extract all unique tags
@@ -217,4 +230,12 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function deg2rad(deg: number): number {
   return deg * (Math.PI / 180)
+}
+
+function formatDistance(distanceInKm: number): string {
+  if (distanceInKm < 1) {
+    return `${Math.round(distanceInKm * 1000)}m`
+  }
+
+  return `${distanceInKm.toFixed(1)}km`
 }

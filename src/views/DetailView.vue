@@ -47,12 +47,11 @@ const goBack = () => {
     <div class="relative h-64 md:h-96 w-full overflow-hidden">
       <img
         :src="imageSrc"
-        class="theme-dimmable-image w-full h-full object-cover"
+        class="theme-dimmable-image detail-hero-image w-full h-full object-cover"
         :alt="`${restaurant.name} 封面图片`"
+        fetchpriority="high"
+        decoding="async"
         @error="handleImageError"
-        v-motion
-        :initial="{ scale: 1.1 }"
-        :enter="{ scale: 1 }"
       />
       <div
         class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
@@ -166,3 +165,24 @@ const goBack = () => {
     </button>
   </div>
 </template>
+
+<style scoped>
+.detail-hero-image {
+  animation: detail-hero-settle 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes detail-hero-settle {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-hero-image {
+    animation: none;
+  }
+}
+</style>

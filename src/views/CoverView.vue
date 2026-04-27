@@ -8,6 +8,7 @@ const route = useRoute()
 
 // 防止重复导航
 const isNavigating = ref(false)
+let homePreloadTimer: ReturnType<typeof setTimeout> | null = null
 
 const navigateToHome = () => {
   if (isNavigating.value) return
@@ -62,6 +63,11 @@ onMounted(() => {
   window.addEventListener('touchstart', handleTouchStart, { passive: true })
   window.addEventListener('touchend', handleTouchEnd, { passive: true })
   window.addEventListener('keydown', handleKeyDown)
+
+  homePreloadTimer = setTimeout(() => {
+    homePreloadTimer = null
+    void import('@/views/HomeView.vue')
+  }, 600)
 })
 
 onBeforeUnmount(() => {
@@ -69,6 +75,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('touchstart', handleTouchStart)
   window.removeEventListener('touchend', handleTouchEnd)
   window.removeEventListener('keydown', handleKeyDown)
+
+  if (homePreloadTimer) {
+    clearTimeout(homePreloadTimer)
+    homePreloadTimer = null
+  }
 })
 </script>
 

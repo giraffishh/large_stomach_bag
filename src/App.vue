@@ -21,6 +21,12 @@ import { RouterView } from 'vue-router'
   grid-template-areas: 'stack';
   min-height: 100vh;
   width: 100%;
+  background: #f5f5f4;
+  overflow-x: clip;
+}
+
+.dark .app-container {
+  background: #09090b;
 }
 
 .app-page {

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted } from 'vue'
+import { defineAsyncComponent, onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRestaurantStore } from '@/stores/restaurants'
-import { useAMap } from '@/composables/useAMap'
 import RestaurantCard from '@/components/RestaurantCard.vue'
 import HomeSearchBar from '@/components/home/HomeSearchBar.vue'
 import RestaurantFilterDropdown from '@/components/home/RestaurantFilterDropdown.vue'
@@ -11,10 +10,32 @@ import SelectedFilterChips from '@/components/home/SelectedFilterChips.vue'
 
 const RestaurantMap = defineAsyncComponent(() => import('@/components/RestaurantMap.vue'))
 
-const { initLocation } = useAMap()
+let locationTimer: ReturnType<typeof setTimeout> | null = null
+let isDisposed = false
 
 onMounted(() => {
-  initLocation()
+  locationTimer = setTimeout(() => {
+    locationTimer = null
+
+    import('@/composables/useAMap')
+      .then(({ useAMap }) => {
+        if (!isDisposed) {
+          useAMap().initLocation()
+        }
+      })
+      .catch((error) => {
+        console.error('[HomeView] Failed to initialize location:', error)
+      })
+  }, 350)
+})
+
+onBeforeUnmount(() => {
+  isDisposed = true
+
+  if (locationTimer) {
+    clearTimeout(locationTimer)
+    locationTimer = null
+  }
 })
 
 const store = useRestaurantStore()
@@ -61,9 +82,10 @@ const { filteredRestaurants, isMapView } = storeToRefs(store)
           class="restaurant-list flex flex-col gap-4"
         >
           <RestaurantCard
-            v-for="restaurant in filteredRestaurants"
+            v-for="(restaurant, index) in filteredRestaurants"
             :key="restaurant.id"
             :restaurant="restaurant"
+            :priority="index < 2"
           />
         </TransitionGroup>
       </div>

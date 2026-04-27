@@ -11,15 +11,18 @@ const props = withDefaults(
   defineProps<{
     restaurant: Restaurant
     autoHeight?: boolean
+    priority?: boolean
   }>(),
   {
     autoHeight: false,
+    priority: false,
   },
 )
 
 const store = useRestaurantStore()
 
 const displayAddress = computed(() => getDisplayAddress(props.restaurant))
+const distanceLabel = computed(() => store.getDistance(props.restaurant))
 const imagePlaceholder = 'https://placehold.co/600x400?text=No+Image'
 const { imageSrc, handleImageError } = useImageFallback(() =>
   getRestaurantImageSources(props.restaurant, imagePlaceholder),
@@ -31,15 +34,14 @@ const { imageSrc, handleImageError } = useImageFallback(() =>
     :to="`/restaurant/${restaurant.id}`"
     class="group bg-white dark:bg-zinc-900 rounded-xl md:rounded-2xl overflow-hidden shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer border border-stone-200/60 dark:border-zinc-800 flex flex-row"
     :class="[autoHeight ? 'min-h-[7rem] md:min-h-[12rem]' : 'h-28 md:h-48']"
-    v-motion
-    :initial="{ opacity: 0, y: 20 }"
-    :enter="{ opacity: 1, y: 0 }"
   >
     <!-- Cover Image -->
     <div class="w-28 md:w-48 lg:w-64 shrink-0 overflow-hidden relative self-stretch">
       <img
         :src="imageSrc"
-        loading="lazy"
+        :loading="priority ? 'eager' : 'lazy'"
+        :fetchpriority="priority ? 'high' : 'auto'"
+        decoding="async"
         alt="Cover"
         @error="handleImageError"
         class="theme-dimmable-image absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -85,10 +87,10 @@ const { imageSrc, handleImageError } = useImageFallback(() =>
           <RatingBadge :rating="restaurant.rating" class="scale-90 origin-left md:scale-100" />
 
           <span
-            v-if="store.getDistance(restaurant)"
+            v-if="distanceLabel"
             class="text-xs text-zinc-500 dark:text-zinc-400 font-medium md:ml-1 ml-auto md:ml-0 whitespace-nowrap"
           >
-            {{ store.getDistance(restaurant) }}
+            {{ distanceLabel }}
           </span>
         </div>
         <button

@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,7 +12,7 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home',
-      component: HomeView,
+      component: () => import('../views/HomeView.vue'),
       meta: { transition: 'slide-up' },
     },
     {
@@ -33,7 +32,7 @@ router.beforeEach((to, from, next) => {
     // 重定向到封面，并保留原目标路径
     next({
       path: '/',
-      query: { redirect: to.fullPath }
+      query: { redirect: to.fullPath },
     })
   } else {
     next()
