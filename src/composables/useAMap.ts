@@ -2,6 +2,9 @@ import { ref } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
 import { useRestaurantStore } from '@/stores/restaurants'
 
+const amapKey = import.meta.env.VITE_AMAP_JS_KEY
+const amapSecurityCode = import.meta.env.VITE_AMAP_SECURITY_CODE
+
 // Singleton promise to ensure AMap is loaded only once
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let aMapPromise: Promise<any> | null = null
@@ -15,13 +18,18 @@ export function useAMap() {
   const initAMap = (): Promise<any> => {
     if (aMapPromise) return aMapPromise
 
-    // Configure AMap Security (Must be set before loading)
-    window._AMapSecurityConfig = {
-      securityJsCode: 'a7f9391274c33dfcd39a523b9a42cabe',
+    if (!amapKey) {
+      return Promise.reject(new Error('Missing VITE_AMAP_JS_KEY'))
+    }
+
+    if (amapSecurityCode) {
+      window._AMapSecurityConfig = {
+        securityJsCode: amapSecurityCode,
+      }
     }
 
     aMapPromise = AMapLoader.load({
-      key: '59e2827ddb4005767461570e23528377',
+      key: amapKey,
       version: '2.0',
       plugins: [
         'AMap.ControlBar',
@@ -55,13 +63,12 @@ export function useAMap() {
       citySearch.getLocalCity((status: string, result: any) => {
         if (status === 'complete' && result.info === 'OK') {
           if (result.city) {
-            console.log('📍 [useAMap] CitySearch (IP) detected city:', result.city)
             // Only set if we haven't set a precise location yet
             if (!store.userLocation) {
               store.setUserCity(result.city)
             } else if (!store.userCity) {
-               // Fallback if location exists but city doesn't
-               store.setUserCity(result.city)
+              // Fallback if location exists but city doesn't
+              store.setUserCity(result.city)
             }
           }
         }
@@ -84,7 +91,6 @@ export function useAMap() {
           if (result.addressComponent) {
             const city = result.addressComponent.city || result.addressComponent.province
             if (city) {
-              console.log('🎯 [useAMap] Geolocation (Precise) detected user city:', city)
               store.setUserCity(city)
             }
           }

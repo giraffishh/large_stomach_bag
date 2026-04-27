@@ -217,9 +217,10 @@ onMounted(() => {
             }))
         }
 
-        // Initialize Cluster
-        const initCluster = () => {
-          const points = getClusterPoints(restaurantStore.filteredRestaurants)
+        // Initialize or replace Cluster. AMap MarkerCluster#setData can break with
+        // custom marker renderers, so we recreate the cluster when filters change.
+        const renderCluster = (list: Restaurant[]) => {
+          const points = getClusterPoints(list)
 
           // Custom render function for single markers (Restaurant)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -306,6 +307,10 @@ onMounted(() => {
           }
 
           if (AMap.MarkerCluster) {
+            if (cluster.value) {
+              cluster.value.setMap(null)
+            }
+
             cluster.value = new AMap.MarkerCluster(map.value, points, {
               gridSize: 15, // Reduced from 60 to make clustering less aggressive
               renderMarker: renderMarker,
@@ -317,18 +322,14 @@ onMounted(() => {
         }
 
         // Initialize markers after plugin load
-        initCluster()
+        renderCluster(restaurantStore.filteredRestaurants)
 
         // Watch for filter changes and update cluster data
         watch(
           () => restaurantStore.filteredRestaurants,
           (newVal) => {
-            if (cluster.value) {
-              const newPoints = getClusterPoints(newVal)
-              cluster.value.setData(newPoints)
-            }
+            renderCluster(newVal)
           },
-          { deep: true },
         )
       })
 
@@ -368,8 +369,6 @@ onMounted(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         geolocation.getCurrentPosition((status: string, result: any) => {
           if (status === 'complete') {
-            // console.log('Precise geolocation successful', result)
-
             userPosition.value = result.position // Update stored position
 
             // Only center on the very first load (keep user-selected zoom)
@@ -394,13 +393,11 @@ onMounted(() => {
       // Watch idle state to manage timer resource
       watch(idle, (isIdle) => {
         if (isIdle) {
-          console.log('User is idle. Pausing location updates.')
           if (timer.value) {
             clearInterval(timer.value)
             timer.value = null
           }
         } else {
-          console.log('User is active. Resuming location updates.')
           // Resume immediately
           startPositioning()
           // Restart timer if not running

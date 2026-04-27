@@ -4,6 +4,7 @@ import { useRestaurantStore } from '@/stores/restaurants'
 import { computed } from 'vue'
 import { ArrowLeft, MapPin, ExternalLink } from 'lucide-vue-next'
 import RatingBadge from '@/components/RatingBadge.vue'
+import { extractMapUrl, getDisplayAddress } from '@/utils/restaurant'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,36 +16,11 @@ const restaurant = computed(() => {
 
 const displayAddress = computed(() => {
   if (!restaurant.value) return ''
-  if (restaurant.value.location) return restaurant.value.location
-
-  const addr = restaurant.value.shareLink || ''
-  const startMarker = '/人'
-  const endMarker = 'https'
-
-  const startIndex = addr.indexOf(startMarker)
-  const endIndex = addr.indexOf(endMarker)
-
-  // If both found and order is correct
-  if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-    return addr.substring(startIndex + startMarker.length, endIndex).trim()
-  }
-
-  // If '/人' found but no 'https', take everything after '/人'
-  if (startIndex !== -1 && endIndex === -1) {
-    return addr.substring(startIndex + startMarker.length).trim()
-  }
-
-  // Fallback: If no match, return original but try to strip URL if present
-  if (endIndex !== -1) {
-    return addr.substring(0, endIndex).trim()
-  }
-  return addr
+  return getDisplayAddress(restaurant.value)
 })
 
 const mapUrl = computed(() => {
-  if (!restaurant.value?.shareLink) return ''
-  const match = restaurant.value.shareLink.match(/(https?:\/\/[^\s]+)/)
-  return match ? match[0] : ''
+  return extractMapUrl(restaurant.value?.shareLink)
 })
 
 const goBack = () => router.back()

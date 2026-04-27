@@ -4,6 +4,7 @@ import { useRestaurantStore } from '@/stores/restaurants'
 import RatingBadge from './RatingBadge.vue'
 import { MapPin, ArrowRight } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { getDisplayAddress } from '@/utils/restaurant'
 
 const props = withDefaults(
   defineProps<{
@@ -17,29 +18,7 @@ const props = withDefaults(
 
 const store = useRestaurantStore()
 
-const displayAddress = computed(() => {
-  if (props.restaurant.location) return props.restaurant.location
-
-  const addr = props.restaurant.shareLink || ''
-  const startMarker = '/人'
-  const endMarker = 'https'
-
-  const startIndex = addr.indexOf(startMarker)
-  const endIndex = addr.indexOf(endMarker)
-
-  // If both found and order is correct
-  if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-    return addr.substring(startIndex + startMarker.length, endIndex).trim()
-  }
-
-  // If '/人' found but no 'https', take everything after '/人'
-  if (startIndex !== -1 && endIndex === -1) {
-    return addr.substring(startIndex + startMarker.length).trim()
-  }
-
-  // Fallback: If no match, return original
-  return addr
-})
+const displayAddress = computed(() => getDisplayAddress(props.restaurant))
 </script>
 
 <template>
