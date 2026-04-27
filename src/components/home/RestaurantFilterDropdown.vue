@@ -148,7 +148,7 @@ const isCurrentCityOption = (city: string) => {
 
     <div
       v-if="showFilterMenu"
-      class="absolute top-full left-0 mt-2 w-[calc(100vw-32px)] md:w-[480px] max-w-[480px] bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 z-50 flex flex-col max-h-[75vh] overflow-hidden"
+      class="absolute top-full left-0 mt-2 w-[calc(100vw-32px)] md:w-[480px] max-w-[480px] bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 z-50 flex flex-col max-h-[75svh] overflow-hidden"
     >
       <button
         v-if="activeFilterCount > 0"
