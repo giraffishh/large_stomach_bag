@@ -320,7 +320,9 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
         <section class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/80 p-4 md:p-5">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-base md:text-lg font-bold">评分分布</h2>
-            <span class="text-xs text-zinc-500 dark:text-zinc-400">全部餐厅</span>
+            <span class="text-xs text-zinc-500 dark:text-zinc-400">
+              共{{ currentRestaurants.length }}家餐厅
+            </span>
           </div>
 
           <div v-if="ratingBreakdown.length > 0" class="mt-4 space-y-3">
@@ -347,7 +349,9 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
         <section class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/80 p-4 md:p-5">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-base md:text-lg font-bold">城市分布</h2>
-            <span class="text-xs text-zinc-500 dark:text-zinc-400">全部餐厅</span>
+            <span class="text-xs text-zinc-500 dark:text-zinc-400">
+              共{{ cityBreakdown.length }}座城市
+            </span>
           </div>
 
           <div v-if="cityBreakdown.length > 0" class="mt-4 space-y-3">
@@ -375,7 +379,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
         <section class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/80 p-4 md:p-5">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-base md:text-lg font-bold">价格带</h2>
-            <span class="text-xs text-zinc-500 dark:text-zinc-400">价格横轴分布</span>
+            <span class="text-xs text-zinc-500 dark:text-zinc-400">价格分布曲线</span>
           </div>
 
           <div v-if="priceCurve" class="mt-4">
@@ -464,7 +468,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
         <section class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/80 p-4 md:p-5">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-base md:text-lg font-bold">标签热度</h2>
-            <span class="text-xs text-zinc-500 dark:text-zinc-400">出现次数前 15</span>
+            <span class="text-xs text-zinc-500 dark:text-zinc-400">出现次数top15</span>
           </div>
 
           <div v-if="topTags.length > 0" class="mt-4 flex flex-wrap gap-2">
