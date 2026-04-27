@@ -23,7 +23,16 @@ const mapUrl = computed(() => {
   return extractMapUrl(restaurant.value?.shareLink)
 })
 
-const goBack = () => router.back()
+const goBack = () => {
+  const back = window.history.state?.back
+
+  if (typeof back === 'string' && back.startsWith('/')) {
+    router.back()
+    return
+  }
+
+  router.replace('/home')
+}
 </script>
 
 <template>
@@ -32,7 +41,7 @@ const goBack = () => router.back()
     <div class="relative h-64 md:h-96 w-full overflow-hidden">
       <img
         :src="restaurant.coverUrl || restaurant.cover || 'https://placehold.co/800x600'"
-        class="w-full h-full object-cover"
+        class="theme-dimmable-image w-full h-full object-cover"
         :alt="`${restaurant.name} 封面图片`"
         v-motion
         :initial="{ scale: 1.1 }"

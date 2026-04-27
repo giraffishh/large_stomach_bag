@@ -5,3 +5,11 @@
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+.theme-dimmable-image {
+  transition: filter 200ms ease;
+}
+
+.dark .theme-dimmable-image {
+  filter: brightness(0.9);
+}
