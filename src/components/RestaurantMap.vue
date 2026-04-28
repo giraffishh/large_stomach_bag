@@ -580,11 +580,11 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .mobile-locate-button {
-    bottom: max(2rem, calc(env(safe-area-inset-bottom, 0px) - 2rem));
+    bottom: max(2rem, env(safe-area-inset-bottom, 0px));
   }
 
   .mobile-card-overlay {
-    bottom: max(2rem, calc(env(safe-area-inset-bottom, 0px) - 2rem));
+    bottom: max(2rem, env(safe-area-inset-bottom, 0px));
   }
 
   :deep(.amap-indoormap-floorbar-control) {
