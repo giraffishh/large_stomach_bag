@@ -488,7 +488,7 @@ onUnmounted(() => {
       <!-- Custom Geolocation Button -->
       <button
         @click="centerOnUser"
-        class="absolute bottom-4 right-4 md:bottom-8 md:right-8 p-2 md:p-3 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-300 ease-out z-50"
+        class="mobile-locate-button fixed right-4 md:absolute md:bottom-8 md:right-8 p-2 md:p-3 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-300 ease-out z-50"
         title="回到我的位置"
         :class="{ '-translate-y-32 md:translate-y-0': selectedRestaurant }"
       >
@@ -499,7 +499,7 @@ onUnmounted(() => {
       <Transition name="slide-up">
         <div
           v-if="selectedRestaurant"
-          class="md:hidden absolute bottom-4 left-4 right-4 z-[60]"
+          class="mobile-card-overlay md:hidden fixed left-4 right-4 z-[60]"
           :style="{
             transform: `translateY(${cardTranslateY}px)`,
             transition: isDragging ? 'none' : 'transform 0.3s ease-out',
@@ -539,6 +539,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.mobile-locate-button,
+.mobile-card-overlay {
+  bottom: 1rem;
+}
+
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition:
@@ -574,6 +579,14 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .mobile-locate-button {
+    bottom: max(2rem, calc(env(safe-area-inset-bottom, 0px) - 2rem));
+  }
+
+  .mobile-card-overlay {
+    bottom: max(2rem, calc(env(safe-area-inset-bottom, 0px) - 2rem));
+  }
+
   :deep(.amap-indoormap-floorbar-control) {
     /* Mobile adjustments: Scale down and maintain right-side positioning */
     transform-origin: right top;
