@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useRestaurantStore } from '@/stores/restaurants'
-import { computed } from 'vue'
-import { ArrowLeft, MapPin, ExternalLink } from 'lucide-vue-next'
+import { ArrowLeft, MapPin, ExternalLink, FileText } from 'lucide-vue-next'
 import RatingBadge from '@/components/RatingBadge.vue'
+import TwikooComments from '@/components/TwikooComments.vue'
 import { useImageFallback } from '@/composables/useImageFallback'
 import { extractMapUrl, getDisplayAddress, getRestaurantImageSources } from '@/utils/restaurant'
 
@@ -22,6 +23,11 @@ const displayAddress = computed(() => {
 
 const mapUrl = computed(() => {
   return extractMapUrl(restaurant.value?.shareLink)
+})
+
+const commentPath = computed(() => {
+  if (!restaurant.value) return ''
+  return `/restaurant/${restaurant.value.id}`
 })
 
 const imagePlaceholder = 'https://placehold.co/800x600?text=No+Image'
@@ -104,18 +110,19 @@ const goBack = () => {
       <div class="space-y-5 md:space-y-8">
         <!-- Review Section -->
 
-        <section>
-          <h2
-            class="text-lg md:text-xl font-bold mb-3 flex items-center gap-2 text-zinc-900 dark:text-zinc-100"
-          >
-            <span>简评</span>
-          </h2>
-
+        <section
+          class="bg-white/90 dark:bg-zinc-950/60 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 px-4 py-4 md:px-6 md:py-6 shadow-sm"
+        >
+          <div class="flex items-center gap-2 mb-4 text-zinc-900 dark:text-zinc-100">
+            <FileText :size="16" class="md:hidden" />
+            <FileText :size="20" class="hidden md:block" />
+            <h2 class="text-lg md:text-xl font-bold">简评</h2>
+          </div>
           <div
-            class="prose dark:prose-invert max-w-none bg-zinc-50 dark:bg-zinc-800/50 p-4 md:p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800/50"
+            class="prose dark:prose-invert max-w-none bg-zinc-50 dark:bg-zinc-900/40 p-4 md:p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800/70"
           >
             <p
-              class="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300 leading-relaxed text-sm md:text-lg"
+              class="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300 leading-relaxed text-sm md:text-base"
             >
               {{ restaurant.review || '暂无详细评价...' }}
             </p>
@@ -124,20 +131,20 @@ const goBack = () => {
 
         <!-- Info Section -->
 
-        <section class="grid grid-cols-1 gap-6">
+        <section
+          class="bg-white/90 dark:bg-zinc-950/60 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 px-4 py-4 md:px-6 md:py-6 shadow-sm"
+        >
+          <div class="flex items-center gap-2 mb-4 text-zinc-900 dark:text-zinc-100">
+            <MapPin :size="16" class="md:hidden" />
+            <MapPin :size="20" class="hidden md:block" />
+            <h2 class="text-lg md:text-xl font-bold">地址</h2>
+          </div>
+
           <div
-            class="bg-zinc-50 dark:bg-zinc-800/30 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800"
+            class="bg-zinc-50 dark:bg-zinc-900/40 p-4 md:p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800/70"
           >
-            <div
-              class="flex items-center gap-2 mb-3 text-zinc-900 dark:text-zinc-100 text-sm md:text-lg font-bold"
-            >
-              <MapPin :size="16" class="md:hidden" />
-
-              <MapPin :size="20" class="hidden md:block" /> 地址
-            </div>
-
             <p
-              class="text-zinc-900 dark:text-zinc-100 font-medium mb-3 text-xs md:text-base leading-relaxed"
+              class="text-zinc-900 dark:text-zinc-100 font-medium mb-4 text-sm md:text-base leading-relaxed"
             >
               {{ displayAddress }}
             </p>
@@ -146,12 +153,14 @@ const goBack = () => {
               v-if="mapUrl"
               :href="mapUrl"
               target="_blank"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#fff3e8] dark:bg-[#4a2402] text-[#ff6a00] dark:text-[#ff9a4d] text-xs font-medium rounded-lg hover:bg-[#ffe7d1] dark:hover:bg-[#5a2c03] transition-colors"
             >
               在大众点评查看 <ExternalLink :size="12" />
             </a>
           </div>
         </section>
+
+        <TwikooComments :path="commentPath" />
       </div>
     </div>
   </div>
