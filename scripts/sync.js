@@ -285,14 +285,30 @@ async function simplifyPage(page) {
       date = getPlainText(props.Date.rich_text);
   }
 
-  // If critical location info is missing, try to fetch from AMap and update Notion
+  // If critical location info is missing, try to fetch from AMap and update Notion.
+  // If coordinates are missing but Location is manually filled, prefer searching by
+  // Location first, then fall back to Name.
   // If city is missing, we search globally and try to fill it.
   // If city is present, we use it to limit search.
   if ((!longitude || !latitude || !location) && name !== "Unknown") {
       const searchCity = city || ""; // Use empty string if city is missing to imply global search
+      const searchKeywords = [];
+
+      if ((!longitude || !latitude) && location) {
+          searchKeywords.push(location);
+      }
+      if (!searchKeywords.includes(name)) {
+          searchKeywords.push(name);
+      }
+
       console.log(`Missing location info for "${name}" (City: ${searchCity || "Global"}). Searching AMap...`);
 
-      const place = await searchAMapPlace(name, searchCity);
+      let place = null;
+      for (const keyword of searchKeywords) {
+          console.log(`Searching AMap with keyword: ${keyword}`);
+          place = await searchAMapPlace(keyword, searchCity);
+          if (place) break;
+      }
 
       if (place) {
           const [lngStr, latStr] = place.location.split(',');
