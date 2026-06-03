@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onBeforeUnmount, onMounted } from 'vue'
+import { defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRestaurantStore } from '@/stores/restaurants'
 import RestaurantCard from '@/components/RestaurantCard.vue'
@@ -12,10 +12,14 @@ import { useFilterQuerySync } from '@/composables/useFilterQuerySync'
 const RestaurantMap = defineAsyncComponent(() => import('@/components/RestaurantMap.vue'))
 useFilterQuerySync()
 
+const HOME_LIST_SCROLL_POSITION_KEY = 'homeListScrollPosition'
+const HOME_SCROLL_RESET_KEY = 'homeScrollReset'
 let locationTimer: ReturnType<typeof setTimeout> | null = null
 let isDisposed = false
 
 onMounted(() => {
+  handleInitialHomeScroll()
+
   locationTimer = setTimeout(() => {
     locationTimer = null
 
@@ -32,6 +36,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  saveHomeListScrollPosition()
   isDisposed = true
 
   if (locationTimer) {
@@ -42,6 +47,72 @@ onBeforeUnmount(() => {
 
 const store = useRestaurantStore()
 const { filteredRestaurants, isMapView } = storeToRefs(store)
+
+watch(isMapView, async (nextIsMapView, previousIsMapView) => {
+  if (nextIsMapView) {
+    if (!previousIsMapView) {
+      saveCurrentWindowScrollAsHomeListPosition()
+    }
+
+    scrollToWindowPosition(0)
+    return
+  }
+
+  if (!previousIsMapView) {
+    return
+  }
+
+  await nextTick()
+  restoreSavedHomeListScrollPosition()
+})
+
+const handleInitialHomeScroll = () => {
+  const shouldResetScroll = sessionStorage.getItem(HOME_SCROLL_RESET_KEY) === 'true'
+
+  if (shouldResetScroll) {
+    sessionStorage.removeItem(HOME_SCROLL_RESET_KEY)
+    sessionStorage.removeItem(HOME_LIST_SCROLL_POSITION_KEY)
+    scrollToWindowPosition(0)
+    return
+  }
+
+  if (isMapView.value) {
+    scrollToWindowPosition(0)
+    return
+  }
+
+  restoreSavedHomeListScrollPosition()
+}
+
+const restoreSavedHomeListScrollPosition = () => {
+  const savedPosition = Number(sessionStorage.getItem(HOME_LIST_SCROLL_POSITION_KEY))
+
+  if (!Number.isFinite(savedPosition) || savedPosition <= 0) {
+    return
+  }
+
+  scrollToWindowPosition(savedPosition)
+}
+
+const saveHomeListScrollPosition = () => {
+  if (isMapView.value) {
+    return
+  }
+
+  saveCurrentWindowScrollAsHomeListPosition()
+}
+
+const saveCurrentWindowScrollAsHomeListPosition = () => {
+  sessionStorage.setItem(HOME_LIST_SCROLL_POSITION_KEY, String(window.scrollY))
+}
+
+const scrollToWindowPosition = (top: number) => {
+  window.scrollTo({ top, left: 0, behavior: 'auto' })
+
+  requestAnimationFrame(() => {
+    window.scrollTo({ top, left: 0, behavior: 'auto' })
+  })
+}
 </script>
 
 <template>

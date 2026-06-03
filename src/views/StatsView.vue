@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ArrowLeft,
@@ -27,10 +27,21 @@ type PriceCurvePoint = {
   count: number
 }
 
+type HomeFilterQuery = {
+  rating?: string
+  city?: string
+  tag?: string
+}
+
 const router = useRouter()
 const store = useRestaurantStore()
 const ratingDisplayOrder = ['夯', '人上人', 'npc', '拉完了'] as const
 const targetCollectionCount = 100
+const HOME_SCROLL_RESET_KEY = 'homeScrollReset'
+
+onMounted(() => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+})
 
 const currentRestaurants = computed(() => store.restaurants)
 
@@ -82,6 +93,35 @@ const ratingBreakdown = computed<StatRow[]>(() => {
     }
   })
 })
+
+const getRatingProgressClass = (rating: string) => {
+  switch (rating) {
+    case '夯':
+      return 'bg-yellow-200/30 dark:bg-yellow-500/12'
+    case '人上人':
+      return 'bg-purple-200/30 dark:bg-purple-500/12'
+    case 'npc':
+      return 'bg-blue-200/30 dark:bg-blue-500/12'
+    case '拉完了':
+      return 'bg-green-200/30 dark:bg-green-500/12'
+    default:
+      return 'bg-zinc-200/30 dark:bg-zinc-700/12'
+  }
+}
+
+const cityProgressClass = 'bg-orange-200/36 dark:bg-orange-300/20'
+
+const maxCityCount = computed(() => {
+  return Math.max(...cityBreakdown.value.map((row) => row.value), 0)
+})
+
+const getRelativeProgressWidth = (value: number, maxValue: number) => {
+  if (maxValue <= 0) {
+    return 0
+  }
+
+  return Math.round((value / maxValue) * 100)
+}
 
 const topTags = computed<StatRow[]>(() => {
   return buildBreakdown(
@@ -197,6 +237,23 @@ const goBack = () => {
   }
 
   router.replace('/home')
+}
+
+const goToRatingFilter = (rating: string) => {
+  void goToHomeFilter({ rating })
+}
+
+const goToCityFilter = (city: string) => {
+  void goToHomeFilter({ city })
+}
+
+const goToTagFilter = (tag: string) => {
+  void goToHomeFilter({ tag })
+}
+
+const goToHomeFilter = async (query: HomeFilterQuery) => {
+  sessionStorage.setItem(HOME_SCROLL_RESET_KEY, 'true')
+  await router.push({ path: '/home', query })
 }
 
 function buildSmoothPath(points: PriceCurvePoint[]): string {
@@ -326,19 +383,30 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
           </div>
 
           <div v-if="ratingBreakdown.length > 0" class="mt-4 space-y-3">
-            <div
+            <button
               v-for="row in ratingBreakdown"
               :key="row.label"
-              class="flex items-center justify-between gap-3 rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-2.5 border border-stone-200 dark:border-zinc-800"
+              type="button"
+              class="relative overflow-hidden flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-2.5 border border-stone-200 dark:border-zinc-800 text-left transition-colors hover:border-orange-300 dark:hover:border-orange-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              @click="goToRatingFilter(row.label)"
             >
-              <RatingBadge :rating="row.label" class="!text-[13px] !font-bold !px-3 !py-1.5" />
-              <div class="text-right">
+              <div
+                class="absolute inset-y-0 left-0 rounded-2xl transition-[width] duration-700 ease-out"
+                :class="getRatingProgressClass(row.label)"
+                :style="{ width: `${Math.round(row.ratio * 100)}%` }"
+                aria-hidden="true"
+              />
+              <RatingBadge
+                :rating="row.label"
+                class="relative z-10 !text-[13px] !font-bold !px-3 !py-1.5"
+              />
+              <div class="relative z-10 text-right">
                 <div class="text-sm font-semibold">{{ row.value }} 家</div>
                 <div class="text-xs text-zinc-500 dark:text-zinc-400">
                   {{ Math.round(row.ratio * 100) }}%
                 </div>
               </div>
-            </div>
+            </button>
           </div>
 
           <div v-else class="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
@@ -355,18 +423,24 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
           </div>
 
           <div v-if="cityBreakdown.length > 0" class="mt-4 space-y-3">
-            <div v-for="row in cityBreakdown" :key="row.label" class="space-y-1.5">
-              <div class="flex items-center justify-between gap-3 text-sm">
+            <button
+              v-for="row in cityBreakdown"
+              :key="row.label"
+              type="button"
+              class="relative overflow-hidden w-full rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-1.5 border border-stone-200 dark:border-zinc-800 text-left transition-colors hover:border-orange-300 dark:hover:border-orange-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              @click="goToCityFilter(row.label)"
+            >
+              <div
+                class="absolute inset-y-0 left-0 rounded-2xl transition-[width] duration-700 ease-out"
+                :class="cityProgressClass"
+                :style="{ width: `${getRelativeProgressWidth(row.value, maxCityCount)}%` }"
+                aria-hidden="true"
+              />
+              <div class="relative z-10 flex items-center justify-between gap-3 text-sm">
                 <span class="font-medium">{{ row.label }}</span>
-                <span class="text-zinc-500 dark:text-zinc-400">{{ row.value }}</span>
+                <span class="font-semibold">{{ row.value }} 家</span>
               </div>
-              <div class="h-2 rounded-full bg-stone-200 dark:bg-zinc-800 overflow-hidden">
-                <div
-                  class="h-full rounded-full bg-gradient-to-r from-orange-400 via-amber-400 to-lime-400"
-                  :style="{ width: `${Math.max(row.ratio * 100, 6)}%` }"
-                />
-              </div>
-            </div>
+            </button>
           </div>
 
           <div v-else class="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
@@ -472,15 +546,17 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
           </div>
 
           <div v-if="topTags.length > 0" class="mt-4 flex flex-wrap gap-2">
-            <div
+            <button
               v-for="tag in topTags"
               :key="tag.label"
-              class="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950/70 px-2.5 py-1.5 text-[13px]"
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950/70 px-2.5 py-1.5 text-[13px] transition-colors hover:border-orange-300 dark:hover:border-orange-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              @click="goToTagFilter(tag.label)"
             >
               <Hash :size="13" class="text-orange-500" />
               <span class="font-medium">{{ tag.label }}</span>
               <span class="text-zinc-500 dark:text-zinc-400">{{ tag.value }}</span>
-            </div>
+            </button>
           </div>
 
           <div v-else class="mt-6 text-sm text-zinc-500 dark:text-zinc-400">

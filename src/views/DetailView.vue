@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useRestaurantStore } from '@/stores/restaurants'
 import { ArrowLeft, MapPin, ExternalLink, FileText } from 'lucide-vue-next'
@@ -34,6 +34,10 @@ const imagePlaceholder = 'https://placehold.co/800x600?text=No+Image'
 const { imageSrc, handleImageError } = useImageFallback(() =>
   getRestaurantImageSources(restaurant.value, imagePlaceholder),
 )
+
+onMounted(() => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+})
 
 const goBack = () => {
   const back = window.history.state?.back
