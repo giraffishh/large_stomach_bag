@@ -1,0 +1,2 @@
+# Run as root or the same user that can read the SQLite database.
+15 3 * * * root umask 077; CANDIDATE_DB_PATH=/var/lib/large-stomach-bag/candidates.sqlite CANDIDATE_BACKUP_DIR=/var/backups/large-stomach-bag /usr/bin/python3 /opt/large-stomach-bag/server/candidates/backup_cleanup.py >> /var/log/large-stomach-candidates-backup.log 2>&1

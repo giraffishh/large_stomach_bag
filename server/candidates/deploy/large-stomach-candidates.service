@@ -1,0 +1,29 @@
+[Unit]
+Description=Large Stomach Bag Candidate API
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/large-stomach-bag/server/candidates
+Environment=HOST=127.0.0.1
+Environment=PORT=8080
+Environment=CANDIDATE_DB_PATH=/var/lib/large-stomach-bag/candidates.sqlite
+Environment=ALLOWED_ORIGINS=https://food.giraffish.top,https://foodtotry.giraffish.top,http://localhost:5173,http://127.0.0.1:5173
+ExecStart=/usr/bin/python3 /opt/large-stomach-bag/server/candidates/app.py
+Restart=always
+RestartSec=3
+TasksMax=32
+MemoryMax=96M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/large-stomach-bag
+PrivateDevices=true
+RestrictSUIDSGID=true
+LockPersonality=true
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target

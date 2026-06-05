@@ -29,6 +29,16 @@ const router = createRouter({
       component: () => import('../views/StatsView.vue'),
     },
     {
+      path: '/candidates',
+      name: 'candidates',
+      component: () => import('../views/CandidateView.vue'),
+    },
+    {
+      path: '/candidates/:id',
+      name: 'candidateDetail',
+      component: () => import('../views/CandidateDetailView.vue'),
+    },
+    {
       path: '/restaurant/:id',
       name: 'detail',
       component: () => import('../views/DetailView.vue'),
@@ -76,11 +86,39 @@ function resolveRouteTransition(
     return 'detail-forward'
   }
 
+  if (from.name === 'home' && to.name === 'candidates') {
+    return 'detail-forward'
+  }
+
+  if (from.name === 'candidates' && to.name === 'detail') {
+    return 'detail-forward'
+  }
+
+  if (from.name === 'candidates' && to.name === 'candidateDetail') {
+    return 'detail-forward'
+  }
+
+  if (from.name === 'candidateDetail' && to.name === 'candidates') {
+    return 'detail-back'
+  }
+
   if (from.name === 'detail' && to.name === 'home') {
     return 'detail-back'
   }
 
   if (from.name === 'stats' && to.name === 'home') {
+    return 'detail-back'
+  }
+
+  if (from.name === 'candidates' && to.name === 'home') {
+    return 'detail-back'
+  }
+
+  if (from.name === 'detail' && to.name === 'candidates') {
+    return 'detail-back'
+  }
+
+  if (from.name === 'candidateDetail' && to.name === 'home') {
     return 'detail-back'
   }
 

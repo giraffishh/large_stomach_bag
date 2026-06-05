@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_AMAP_SECURITY_CODE: string
   readonly VITE_TWIKOO_ENV_ID?: string
   readonly VITE_TWIKOO_SCRIPT_SRC?: string
+  readonly VITE_CANDIDATE_API_BASE?: string
 }
 
 interface ImportMeta {
