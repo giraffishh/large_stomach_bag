@@ -18,6 +18,8 @@ const userPosition = ref<any>(null)
 const selectedRestaurant = ref<Restaurant | null>(null)
 const isCardInteractable = ref(false)
 const hideMarkerLabels = ref(false)
+const isMapLoading = ref(true)
+const mapLoadError = ref('')
 const stopHandles: WatchStopHandle[] = []
 
 const router = useRouter()
@@ -28,6 +30,7 @@ const isDark = useDark()
 const lightStyle = 'amap://styles/7bea9294d71af33c16de9b52c2a16db6'
 const darkStyle = 'amap://styles/blue'
 const markerLabelMinZoom = 11
+const initialMapLoadTimeoutMs = 20000
 
 // Detect user inactivity (5 minutes = 300000 ms)
 const { idle } = useIdle(5 * 60 * 1000)
@@ -37,6 +40,7 @@ const touchStartY = ref(0)
 const cardTranslateY = ref(0)
 const isDragging = ref(false)
 let isDisposed = false
+let hasInitialMapSettled = false
 
 const handleTouchStart = (e: TouchEvent) => {
   if (e.touches.length > 0) {
@@ -86,6 +90,73 @@ const registerStopHandle = (stopHandle: WatchStopHandle) => {
 
 const hasActiveMap = () => {
   return !isDisposed && !!map.value && !!mapContainer.value
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getLngLatFromPosition = (position: any): { lng: number; lat: number } | null => {
+  const lng = Number(
+    position?.lng ?? (typeof position?.getLng === 'function' ? position.getLng() : position?.[0]),
+  )
+  const lat = Number(
+    position?.lat ?? (typeof position?.getLat === 'function' ? position.getLat() : position?.[1]),
+  )
+
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+    return null
+  }
+
+  return { lng, lat }
+}
+
+const getMapLoadErrorMessage = (error: unknown) => {
+  return error instanceof Error && error.message.includes('timed out')
+    ? '地图加载超时，请稍后重试。'
+    : '地图加载失败，请检查网络或高德地图配置。'
+}
+
+const failMapLoading = (error: unknown) => {
+  if (isDisposed) {
+    return
+  }
+
+  console.error(error)
+
+  isMapLoading.value = false
+  mapLoadError.value = getMapLoadErrorMessage(error)
+}
+
+// AMapLoader only means the JS API is available. The map itself is ready after
+// the Map "complete" event, which fires when the initial tiles are loaded.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const waitForInitialMapLoad = (mapInstance: any): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    let isSettled = false
+
+    const cleanup = () => {
+      window.clearTimeout(timeoutId)
+      mapInstance.off?.('complete', handleComplete)
+    }
+
+    const settle = (callback: () => void) => {
+      if (isSettled) {
+        return
+      }
+
+      isSettled = true
+      cleanup()
+      callback()
+    }
+
+    const handleComplete = () => {
+      settle(resolve)
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      settle(() => reject(new Error('AMap initial tile loading timed out')))
+    }, initialMapLoadTimeoutMs)
+
+    mapInstance.on('complete', handleComplete)
+  })
 }
 
 const updateMarkerLabelVisibility = () => {
@@ -173,9 +244,12 @@ const getRatingColor = (rating: string) => {
 
 onMounted(() => {
   isDisposed = false
+  hasInitialMapSettled = false
+  isMapLoading.value = true
+  mapLoadError.value = ''
 
   // Use shared initAMap function
-  initAMap().then((AMap) => {
+  initAMap().then(async (AMap) => {
       if (isDisposed || !mapContainer.value) {
         return
       }
@@ -191,6 +265,7 @@ onMounted(() => {
         showIndoorMap: true, // Enable indoor map
         layers: [indoorMapLayer, baseLayer],
       })
+      const initialMapLoadPromise = waitForInitialMapLoad(map.value)
 
       // Save map state on move/zoom
       const saveState = () => {
@@ -249,6 +324,13 @@ onMounted(() => {
         }
 
         const points = getClusterPoints(list)
+
+        if (
+          selectedRestaurant.value &&
+          !list.some((restaurant) => restaurant.id === selectedRestaurant.value?.id)
+        ) {
+          selectedRestaurant.value = null
+        }
 
         // Custom render function for single markers (Restaurant)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -409,7 +491,31 @@ onMounted(() => {
             if (isFirstLocation) {
               // If we have a saved state, don't auto-center, just update isFirstLocation
               if (!restaurantStore.mapState) {
+                const nextCenter = getLngLatFromPosition(result.position)
+                const currentCenter = hasActiveMap() ? getLngLatFromPosition(map.value.getCenter()) : null
+                const shouldRecenter =
+                  nextCenter &&
+                  (!currentCenter ||
+                    Math.abs(currentCenter.lng - nextCenter.lng) > 0.000001 ||
+                    Math.abs(currentCenter.lat - nextCenter.lat) > 0.000001)
+                const shouldShowRecenterLoading = hasInitialMapSettled && shouldRecenter
+                const recenterLoadPromise = shouldShowRecenterLoading
+                  ? waitForInitialMapLoad(map.value)
+                  : null
+
+                if (shouldShowRecenterLoading) {
+                  isMapLoading.value = true
+                  mapLoadError.value = ''
+                }
+
                 map.value.setCenter(result.position)
+                recenterLoadPromise
+                  ?.then(() => {
+                    if (!isDisposed) {
+                      isMapLoading.value = false
+                    }
+                  })
+                  .catch(failMapLoading)
               }
               isFirstLocation = false
             }
@@ -442,10 +548,15 @@ onMounted(() => {
           }
         }),
       )
+
+      await initialMapLoadPromise
+
+      if (!isDisposed) {
+        hasInitialMapSettled = true
+        isMapLoading.value = false
+      }
     })
-    .catch((e) => {
-      console.error(e)
-    })
+    .catch(failMapLoading)
 })
 
 onUnmounted(() => {
@@ -485,12 +596,48 @@ onUnmounted(() => {
         :class="{ 'marker-labels-hidden': hideMarkerLabels }"
       ></div>
 
+      <div
+        v-if="isMapLoading"
+        class="absolute inset-0 z-40 flex items-center justify-center bg-stone-100/90 dark:bg-zinc-950/90 backdrop-blur-sm"
+      >
+        <div
+          class="w-[min(18rem,calc(100vw-3rem))] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-4 shadow-sm"
+        >
+          <div class="h-3 w-24 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse"></div>
+          <div
+            class="mt-3 h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 animate-pulse"
+          ></div>
+          <p class="mt-4 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            正在加载地图...
+          </p>
+        </div>
+      </div>
+
+      <div
+        v-else-if="mapLoadError"
+        class="absolute inset-0 z-40 flex items-center justify-center bg-stone-100/92 dark:bg-zinc-950/92 px-4 text-center"
+      >
+        <div
+          class="max-w-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-4 shadow-sm"
+        >
+          <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">地图暂时不可用</p>
+          <p class="mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            {{ mapLoadError }}
+          </p>
+        </div>
+      </div>
+
       <!-- Custom Geolocation Button -->
       <button
         @click="centerOnUser"
+        :disabled="isMapLoading || Boolean(mapLoadError)"
         class="mobile-locate-button fixed right-4 md:absolute md:bottom-8 md:right-8 p-2 md:p-3 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all duration-300 ease-out z-50"
         title="回到我的位置"
-        :class="{ '-translate-y-32 md:translate-y-0': selectedRestaurant }"
+        aria-label="回到我的位置"
+        :class="{
+          '-translate-y-32 md:translate-y-0': selectedRestaurant,
+          'cursor-not-allowed opacity-60': isMapLoading || mapLoadError,
+        }"
       >
         <Locate class="w-5 h-5 md:w-6 md:h-6" />
       </button>

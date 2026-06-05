@@ -37,7 +37,8 @@ const navigateToHome = () => {
     return
   }
 
-  const { redirect: _redirect, ...query } = route.query
+  const query = { ...route.query }
+  delete query.redirect
   router.replace({ path: '/home', query })
 }
 
