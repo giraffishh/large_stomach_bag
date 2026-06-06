@@ -50,6 +50,7 @@ const updateActionsMenuPosition = () => {
 }
 
 const openActionsMenu = async () => {
+  updateActionsMenuPosition()
   showActionsMenu.value = true
   await nextTick()
   updateActionsMenuPosition()
@@ -151,14 +152,15 @@ onBeforeUnmount(() => {
       <button
         ref="actionsButtonRef"
         @click="toggleActionsMenu"
-        class="p-2.5 md:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors shrink-0"
-        title="打开快捷菜单"
-        aria-label="打开快捷菜单"
+        class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-zinc-600 transition-colors hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 md:px-3.5 md:py-3 shrink-0"
+        title="打开更多菜单"
+        aria-label="打开更多菜单"
         :aria-expanded="showActionsMenu"
       >
+        <span class="text-[13px] font-bold leading-none">更多</span>
         <Menu
           :size="18"
-          class="actions-menu-trigger-icon md:w-5 md:h-5"
+          class="actions-menu-trigger-icon md:h-5 md:w-5"
           :class="{ 'is-open': showActionsMenu }"
         />
       </button>
@@ -167,7 +169,7 @@ onBeforeUnmount(() => {
         <Transition name="actions-backdrop">
           <div
             v-if="showActionsMenu"
-            class="fixed inset-0 z-50 bg-zinc-950/12 backdrop-blur-[1px] dark:bg-black/24"
+            class="actions-backdrop-panel fixed inset-x-0 top-0 z-50 bg-zinc-950/12 backdrop-blur-[1px] dark:bg-black/24"
             aria-hidden="true"
             @pointerdown.stop
             @mousedown.stop
@@ -179,7 +181,7 @@ onBeforeUnmount(() => {
         <Transition name="actions-menu">
           <div
             v-if="showActionsMenu"
-            class="fixed z-[60] flex flex-col items-end gap-2"
+            class="fixed z-[60] flex flex-col items-end gap-3"
             :style="actionsMenuStyle"
             @pointerdown.stop
             @mousedown.stop
@@ -251,12 +253,12 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.55rem;
+  gap: 0.65rem;
   cursor: pointer;
   border: 1px solid rgb(228 228 231);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.94);
-  padding: 0.3rem 0.35rem 0.3rem 0.75rem;
+  padding: 0.4rem 0.45rem 0.4rem 0.9rem;
   color: rgb(63 63 70);
   box-shadow:
     0 10px 24px rgba(39, 39, 42, 0.1),
@@ -271,7 +273,7 @@ onBeforeUnmount(() => {
 }
 
 .action-menu-label {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -291,8 +293,8 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 999px;
   background: rgb(244 244 245);
   color: rgb(82 82 91);
@@ -339,13 +341,19 @@ onBeforeUnmount(() => {
 
 @media (min-width: 768px) {
   .action-menu-item {
-    padding: 0.35rem 0.4rem 0.35rem 0.85rem;
+    padding: 0.45rem 0.5rem 0.45rem 1rem;
   }
 
   .action-menu-icon {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
   }
+}
+
+.actions-backdrop-panel {
+  bottom: calc(env(safe-area-inset-bottom, 0px) * -1);
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .actions-menu-trigger-icon {
@@ -358,82 +366,16 @@ onBeforeUnmount(() => {
 
 .actions-menu-enter-active,
 .actions-menu-leave-active {
-  transition: opacity 80ms ease;
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top right;
 }
 
 .actions-menu-enter-from,
 .actions-menu-leave-to {
   opacity: 0;
-}
-
-.actions-menu-enter-active .action-menu-item {
-  animation: action-menu-drop 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.actions-menu-leave-active .action-menu-item {
-  animation: action-menu-lift 260ms cubic-bezier(0.4, 0, 1, 1) both;
-}
-
-.actions-menu-enter-active .action-menu-item:nth-child(1) {
-  animation-delay: 0ms;
-}
-
-.actions-menu-enter-active .action-menu-item:nth-child(2) {
-  animation-delay: 180ms;
-}
-
-.actions-menu-enter-active .action-menu-item:nth-child(3) {
-  animation-delay: 360ms;
-}
-
-.actions-menu-enter-active .action-menu-item:nth-child(4) {
-  animation-delay: 540ms;
-}
-
-.actions-menu-leave-active .action-menu-item:nth-child(1) {
-  animation-delay: 180ms;
-}
-
-.actions-menu-leave-active .action-menu-item:nth-child(2) {
-  animation-delay: 120ms;
-}
-
-.actions-menu-leave-active .action-menu-item:nth-child(3) {
-  animation-delay: 60ms;
-}
-
-.actions-menu-leave-active .action-menu-item:nth-child(4) {
-  animation-delay: 0ms;
-}
-
-@keyframes action-menu-drop {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, -46px, 0) scale(0.62);
-  }
-
-  58% {
-    opacity: 1;
-    transform: translate3d(0, 9px, 0) scale(1.08);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes action-menu-lift {
-  0% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate3d(0, -22px, 0) scale(0.84);
-  }
+  transform: translate3d(0, -8px, 0) scale(0.96);
 }
 
 .actions-backdrop-enter-active,
@@ -488,3 +430,4 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+

@@ -458,13 +458,13 @@ function saveUpvotedIds(ids: Set<string>) {
                   v-model="form.name"
                   maxlength="80"
                   required
-                  placeholder="请尽量填写完整店名"
+                  placeholder="完整店名"
                 />
               </label>
 
               <label class="candidate-field">
                 <span>城市/地址 <em>[选填]</em></span>
-                <input v-model="form.location" maxlength="160" placeholder="大致位置即可" />
+                <input v-model="form.location" maxlength="160" placeholder="大致位置" />
               </label>
 
               <div class="grid grid-cols-2 gap-3">
@@ -479,7 +479,7 @@ function saveUpvotedIds(ids: Set<string>) {
                 </label>
                 <label class="candidate-field">
                   <span>标签 <em>[选填]</em></span>
-                  <input v-model="form.tags" maxlength="120" placeholder="火锅·烤肉·漂亮饭" />
+                  <input v-model="form.tags" maxlength="120" placeholder="火锅 · 烤肉 · 漂亮饭" />
                 </label>
               </div>
 
@@ -490,13 +490,13 @@ function saveUpvotedIds(ids: Set<string>) {
                   maxlength="500"
                   rows="4"
                   required
-                  placeholder="为什么推荐去吃......"
+                  placeholder="出品 · 环境 · 服务 · 价格..."
                 ></textarea>
               </label>
 
               <label class="candidate-field">
                 <span>推荐人 <em>[选填]</em></span>
-                <input v-model="form.submitter" maxlength="40" placeholder="可选昵称" />
+                <input v-model="form.submitter" maxlength="40" placeholder="昵称 / 联系方式" />
               </label>
             </div>
 

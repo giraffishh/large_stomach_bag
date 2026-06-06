@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft,
@@ -34,6 +34,8 @@ const isSaving = ref(false)
 const isEditing = ref(false)
 const upvotingId = ref('')
 const isDeleting = ref(false)
+const deleteConfirmArmed = ref(false)
+let deleteConfirmTimer: ReturnType<typeof setTimeout> | null = null
 const upvotedIds = ref<Set<string>>(loadUpvotedIds())
 
 const form = reactive({
@@ -64,6 +66,10 @@ const isUpvoted = computed(() => {
 onMounted(() => {
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   void loadCandidate()
+})
+
+onBeforeUnmount(() => {
+  clearDeleteConfirmTimer()
 })
 
 async function loadCandidate() {
@@ -103,6 +109,7 @@ const startEditing = () => {
     return
   }
 
+  resetDeleteConfirm()
   fillForm(candidate.value)
   saveError.value = ''
   isEditing.value = true
@@ -113,6 +120,7 @@ const cancelEditing = () => {
     return
   }
 
+  resetDeleteConfirm()
   if (candidate.value) {
     fillForm(candidate.value)
   }
@@ -145,6 +153,7 @@ async function submitForm() {
     const updatedCandidate = await updateCandidate(candidate.value.id, payload)
     candidate.value = updatedCandidate
     fillForm(updatedCandidate)
+    resetDeleteConfirm()
     isEditing.value = false
   } catch (error) {
     saveError.value = error instanceof Error ? error.message : '保存候选失败。'
@@ -184,8 +193,8 @@ async function handleDelete() {
     return
   }
 
-  const shouldDelete = window.confirm(`删除「${candidate.value.name}」？`)
-  if (!shouldDelete) {
+  if (!deleteConfirmArmed.value) {
+    armDeleteConfirm()
     return
   }
 
@@ -199,6 +208,7 @@ async function handleDelete() {
     loadError.value = error instanceof Error ? error.message : '删除候选失败，请稍后重试。'
   } finally {
     isDeleting.value = false
+    resetDeleteConfirm()
   }
 }
 
@@ -274,6 +284,29 @@ function loadUpvotedIds(): Set<string> {
 
 function saveUpvotedIds(ids: Set<string>) {
   window.localStorage.setItem(CANDIDATE_UPVOTES_KEY, JSON.stringify([...ids]))
+}
+
+function armDeleteConfirm() {
+  deleteConfirmArmed.value = true
+  clearDeleteConfirmTimer()
+  deleteConfirmTimer = setTimeout(() => {
+    deleteConfirmArmed.value = false
+    deleteConfirmTimer = null
+  }, 3500)
+}
+
+function resetDeleteConfirm() {
+  deleteConfirmArmed.value = false
+  clearDeleteConfirmTimer()
+}
+
+function clearDeleteConfirmTimer() {
+  if (!deleteConfirmTimer) {
+    return
+  }
+
+  clearTimeout(deleteConfirmTimer)
+  deleteConfirmTimer = null
 }
 </script>
 
@@ -356,13 +389,13 @@ function saveUpvotedIds(ids: Set<string>) {
                 v-model="form.name"
                 maxlength="80"
                 required
-                placeholder="请尽量填写完整店名"
+                placeholder="完整店名"
               />
             </label>
 
             <label class="candidate-field">
               <span>城市/地址 <em>[选填]</em></span>
-              <input v-model="form.location" maxlength="160" placeholder="大致位置即可" />
+              <input v-model="form.location" maxlength="160" placeholder="大致位置" />
             </label>
 
             <div class="grid grid-cols-2 gap-3">
@@ -377,7 +410,7 @@ function saveUpvotedIds(ids: Set<string>) {
               </label>
               <label class="candidate-field">
                 <span>标签 <em>[选填]</em></span>
-                <input v-model="form.tags" maxlength="120" placeholder="火锅·烤肉·漂亮饭" />
+                <input v-model="form.tags" maxlength="120" placeholder="火锅 · 烤肉 · 漂亮饭" />
               </label>
             </div>
 
@@ -388,13 +421,13 @@ function saveUpvotedIds(ids: Set<string>) {
                 maxlength="500"
                 rows="5"
                 required
-                placeholder="为什么推荐去吃......"
+                placeholder="出品 · 环境 · 服务 · 价格..."
               ></textarea>
             </label>
 
             <label class="candidate-field">
               <span>推荐人 <em>[选填]</em></span>
-              <input v-model="form.submitter" maxlength="40" placeholder="可选昵称" />
+              <input v-model="form.submitter" maxlength="40" placeholder="昵称 / 联系方式" />
             </label>
           </div>
 
@@ -405,13 +438,18 @@ function saveUpvotedIds(ids: Set<string>) {
           <div class="mt-5 flex justify-between gap-2">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900/50"
+              class="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+              :class="
+                deleteConfirmArmed
+                  ? 'border-rose-500 bg-rose-600 text-white hover:bg-rose-700 dark:border-rose-400 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-400'
+                  : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900/50'
+              "
               :disabled="isDeleting"
               @click="handleDelete"
             >
               <LoaderCircle v-if="isDeleting" :size="15" class="animate-spin" />
               <Trash2 v-else :size="15" />
-              <span>{{ isDeleting ? '删除中' : '删除' }}</span>
+              <span>{{ isDeleting ? '删除中' : deleteConfirmArmed ? '确认删除' : '删除' }}</span>
             </button>
 
             <div class="flex gap-2">
