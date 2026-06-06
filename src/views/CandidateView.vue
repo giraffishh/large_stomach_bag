@@ -369,10 +369,10 @@ function saveUpvotedIds(ids: Set<string>) {
             </div>
 
             <div
-              class="mt-2 flex items-center gap-1.5 overflow-hidden text-sm text-zinc-500 dark:text-zinc-400"
+              class="mt-2 flex max-w-[70%] items-center gap-1.5 overflow-hidden text-sm text-zinc-500 dark:text-zinc-400"
             >
               <MapPin :size="14" class="shrink-0" />
-              <span class="min-w-0 flex-1 truncate">
+              <span class="min-w-0 truncate">
                 {{ getCandidateLocation(candidate) || '暂无位置' }}
               </span>
             </div>
