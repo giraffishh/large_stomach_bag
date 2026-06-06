@@ -123,7 +123,7 @@ const scrollToWindowPosition = (top: number) => {
     <header
       class="sticky top-0 z-30 bg-stone-100/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-stone-200 dark:border-zinc-800"
     >
-      <div class="max-w-4xl mx-auto px-4 pt-4 pb-3 md:py-4">
+      <div class="max-w-4xl mx-auto px-4 pt-3 pb-3 md:pt-3 md:pb-4">
         <HomeSearchBar />
 
         <div class="flex items-center mt-1 md:mt-2 relative">
