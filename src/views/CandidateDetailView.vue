@@ -329,10 +329,10 @@ function clearDeleteConfirmTimer() {
           <button
             v-if="candidate && !isEditing"
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-black dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+            class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus-visible:ring-offset-zinc-950"
             @click="startEditing"
           >
-            <Pencil :size="15" />
+            <Pencil :size="16" :stroke-width="2.75" />
             <span>编辑</span>
           </button>
         </div>
@@ -633,3 +633,4 @@ function clearDeleteConfirmTimer() {
   }
 }
 </style>
+

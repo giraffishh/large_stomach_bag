@@ -12,7 +12,7 @@ import {
   Sun,
 } from 'lucide-vue-next'
 import { useDark } from '@vueuse/core'
-import { useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { useRestaurantStore } from '@/stores/restaurants'
 import { syncThemeChrome } from '@/utils/themeChrome'
 
@@ -57,27 +57,29 @@ const openActionsMenu = async () => {
   window.addEventListener('resize', updateActionsMenuPosition)
 }
 
-const toggleMapView = () => {
-  isMapView.value = !isMapView.value
-  showActionsMenu.value = false
-  window.removeEventListener('resize', updateActionsMenuPosition)
-}
-
-const goToStats = () => {
-  showActionsMenu.value = false
-  window.removeEventListener('resize', updateActionsMenuPosition)
-  router.push('/stats')
-}
-
-const goToCandidates = () => {
-  showActionsMenu.value = false
-  window.removeEventListener('resize', updateActionsMenuPosition)
-  router.push('/candidates')
-}
-
 const closeActionsMenu = () => {
   showActionsMenu.value = false
   window.removeEventListener('resize', updateActionsMenuPosition)
+}
+
+const closeActionsMenuBeforeNavigation = async () => {
+  closeActionsMenu()
+  await nextTick()
+}
+
+const toggleMapView = () => {
+  isMapView.value = !isMapView.value
+  closeActionsMenu()
+}
+
+const goToStats = async () => {
+  await closeActionsMenuBeforeNavigation()
+  await router.push('/stats')
+}
+
+const goToCandidates = async () => {
+  await closeActionsMenuBeforeNavigation()
+  await router.push('/candidates')
 }
 
 const toggleActionsMenu = () => {
@@ -130,6 +132,10 @@ const toggleDarkMode = (event: MouseEvent) => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateActionsMenuPosition)
+})
+
+onBeforeRouteLeave(() => {
+  closeActionsMenu()
 })
 </script>
 

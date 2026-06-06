@@ -32,7 +32,7 @@ const selectedSortLabel = computed(() => {
   <div ref="sortMenuRef" class="relative shrink-0 ml-2">
     <button
       @click="showSortMenu = !showSortMenu"
-      class="flex items-center gap-1 px-2 py-1.5 rounded-xl text-[13px] font-bold border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-all whitespace-nowrap"
+      class="flex items-center gap-1 px-2 py-2 rounded-xl text-[13px] font-bold border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-all whitespace-nowrap"
       aria-label="排序选项"
     >
       <ArrowUpDown :size="14" />

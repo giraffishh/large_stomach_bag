@@ -313,7 +313,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
         <div class="flex items-center justify-between gap-3">
           <button
             @click="goBack"
-            class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+            class="stats-pressable inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-200"
             aria-label="返回主页"
           >
             <ArrowLeft :size="16" />
@@ -387,7 +387,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
               v-for="row in ratingBreakdown"
               :key="row.label"
               type="button"
-              class="relative overflow-hidden flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-2.5 border border-stone-200 dark:border-zinc-800 text-left transition-colors hover:border-orange-300 dark:hover:border-orange-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              class="stats-pressable relative overflow-hidden flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-2.5 border border-stone-200 dark:border-zinc-800 text-left"
               @click="goToRatingFilter(row.label)"
             >
               <div
@@ -427,7 +427,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
               v-for="row in cityBreakdown"
               :key="row.label"
               type="button"
-              class="relative overflow-hidden w-full rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-1.5 border border-stone-200 dark:border-zinc-800 text-left transition-colors hover:border-orange-300 dark:hover:border-orange-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              class="stats-pressable relative overflow-hidden w-full rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-1.5 border border-stone-200 dark:border-zinc-800 text-left"
               @click="goToCityFilter(row.label)"
             >
               <div
@@ -550,7 +550,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
               v-for="tag in topTags"
               :key="tag.label"
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950/70 px-2.5 py-1.5 text-[13px] transition-colors hover:border-orange-300 dark:hover:border-orange-500/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              class="stats-pressable inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950/70 px-2.5 py-1.5 text-[13px]"
               @click="goToTagFilter(tag.label)"
             >
               <Hash :size="13" class="text-orange-500" />
@@ -567,3 +567,62 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
     </section>
   </main>
 </template>
+
+<style scoped>
+.stats-pressable {
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 140ms ease;
+}
+
+.stats-pressable:active {
+  transform: scale(0.98);
+  background-color: rgb(255 255 255);
+  box-shadow: inset 0 1px 5px rgb(39 39 42 / 0.12);
+}
+
+:global(.dark) .stats-pressable:active {
+  background-color: rgb(39 39 42 / 0.92);
+  box-shadow: inset 0 1px 4px rgb(0 0 0 / 0.28);
+}
+
+.stats-pressable:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgb(255 255 255),
+    0 0 0 4px rgb(113 113 122 / 0.62);
+}
+
+:global(.dark) .stats-pressable:focus-visible {
+  box-shadow:
+    0 0 0 2px rgb(24 24 27),
+    0 0 0 4px rgb(161 161 170 / 0.56);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stats-pressable:hover {
+    background-color: rgb(255 255 255);
+    box-shadow: 0 8px 18px rgb(39 39 42 / 0.08);
+  }
+
+  :global(.dark) .stats-pressable:hover {
+    background-color: rgb(39 39 42 / 0.88);
+    box-shadow: 0 10px 22px rgb(0 0 0 / 0.24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-pressable {
+    transition: none;
+  }
+
+  .stats-pressable:active {
+    transform: none;
+  }
+}
+</style>

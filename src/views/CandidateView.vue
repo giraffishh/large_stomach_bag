@@ -3,13 +3,12 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import {
   ArrowLeft,
-  ArrowRight,
-  ArrowUp,
   ClipboardList,
   LoaderCircle,
   MapPin,
   Plus,
   RefreshCw,
+  Triangle,
   X,
 } from 'lucide-vue-next'
 import { createCandidate, fetchCandidates, upvoteCandidate } from '@/services/candidates'
@@ -44,10 +43,6 @@ const sortedCandidates = computed(() => {
 
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   })
-})
-
-const openCandidateCount = computed(() => {
-  return candidates.value.filter((candidate) => candidate.status === 'open').length
 })
 
 const totalUpvotes = computed(() => {
@@ -140,7 +135,7 @@ async function handleUpvote(candidate: Candidate) {
     saveUpvotedIds(upvotedIds.value)
   } catch (error) {
     candidates.value = previousCandidates
-    loadError.value = error instanceof Error ? error.message : '顶帖失败，请稍后重试。'
+    loadError.value = error instanceof Error ? error.message : '赞同失败，请稍后重试。'
   } finally {
     upvotingId.value = ''
   }
@@ -203,6 +198,22 @@ const getCandidateLocation = (candidate: Candidate) => {
   return [candidate.city, candidate.address].filter(Boolean).join(' · ')
 }
 
+const getCandidateUpvoteToneClass = (index: number) => {
+  if (index === 0) {
+    return 'text-yellow-500 dark:text-yellow-300'
+  }
+
+  if (index === 1) {
+    return 'text-zinc-400 dark:text-zinc-300'
+  }
+
+  if (index === 2) {
+    return 'text-amber-700 dark:text-amber-500'
+  }
+
+  return 'text-zinc-900 dark:text-zinc-50'
+}
+
 function loadUpvotedIds(): Set<string> {
   try {
     const storedIds = window.localStorage.getItem(CANDIDATE_UPVOTES_KEY)
@@ -250,37 +261,35 @@ function saveUpvotedIds(ids: Set<string>) {
 
     <section class="mx-auto max-w-5xl space-y-4 px-4 pt-4 md:pt-6">
       <div
-        class="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900/80 md:p-5"
+        class="rounded-2xl border border-zinc-200 bg-white/90 p-3.5 dark:border-zinc-800 dark:bg-zinc-900/80 md:p-4"
       >
         <div class="flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <h1 class="text-xl font-bold tracking-tight md:text-2xl">大家想让你吃哪家</h1>
-            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              候选名单独立于已吃过餐厅，按推荐数量实时排序。
+            <h1 class="text-lg font-bold tracking-tight md:text-xl">下一家吃什么...</h1>
+            <p class="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-400">
+              欢迎推荐你喜欢的餐厅，我们会根据投票数量决定下一家试什么❤️
             </p>
           </div>
 
           <button
             @click="openCreateForm"
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:focus-visible:ring-offset-zinc-900"
+            class="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 py-1 pl-1 pr-2.5 text-sm font-bold text-zinc-900 shadow-[0_6px_16px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-all hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500 dark:focus-visible:ring-offset-zinc-900"
           >
-            <Plus :size="15" />
-            <span>添加</span>
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100">
+              <Plus :size="20" stroke-width="3.25" />
+            </span>
+            <span class="text-[15px] leading-none">添加</span>
           </button>
         </div>
 
-        <div class="mt-4 grid grid-cols-3 gap-2">
-          <div class="rounded-xl bg-stone-50 px-3 py-2 dark:bg-zinc-950/60">
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <div class="rounded-xl bg-stone-50 px-3 py-1.5 dark:bg-zinc-950/60">
             <div class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">候选餐厅</div>
-            <div class="mt-1 text-lg font-bold">{{ candidates.length }}</div>
+            <div class="mt-0.5 text-lg font-bold leading-tight">{{ candidates.length }}</div>
           </div>
-          <div class="rounded-xl bg-stone-50 px-3 py-2 dark:bg-zinc-950/60">
-            <div class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">开放候选</div>
-            <div class="mt-1 text-lg font-bold">{{ openCandidateCount }}</div>
-          </div>
-          <div class="rounded-xl bg-stone-50 px-3 py-2 dark:bg-zinc-950/60">
-            <div class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">总顶帖</div>
-            <div class="mt-1 text-lg font-bold">{{ totalUpvotes }}</div>
+          <div class="rounded-xl bg-stone-50 px-3 py-1.5 dark:bg-zinc-950/60">
+            <div class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">总赞同</div>
+            <div class="mt-0.5 text-lg font-bold leading-tight">{{ totalUpvotes }}</div>
           </div>
         </div>
       </div>
@@ -319,11 +328,13 @@ function saveUpvotedIds(ids: Set<string>) {
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">先让大家推荐第一家。</p>
         <button
           type="button"
-          class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-black dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+          class="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 py-1 pl-1 pr-2.5 text-sm font-bold text-zinc-900 shadow-[0_6px_16px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-all hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500"
           @click="openCreateForm"
         >
-          <Plus :size="15" />
-          <span>添加候选</span>
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100">
+            <Plus :size="20" stroke-width="3.25" />
+          </span>
+          <span class="text-[15px] leading-none">添加候选</span>
         </button>
       </div>
 
@@ -336,64 +347,53 @@ function saveUpvotedIds(ids: Set<string>) {
         <article
           v-for="(candidate, index) in sortedCandidates"
           :key="candidate.id"
-          class="group overflow-hidden rounded-xl border border-stone-200/70 bg-white transition-colors duration-200 hover:border-orange-200 hover:bg-orange-50/40 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-orange-500/40 dark:hover:bg-zinc-900"
+          class="group relative overflow-hidden rounded-xl border border-stone-200/60 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.08)] dark:border-zinc-800 dark:bg-zinc-900"
         >
           <RouterLink
             :to="`/candidates/${candidate.id}`"
-            class="block cursor-pointer p-4 pb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-inset"
+            class="block cursor-pointer px-4 pb-3 pt-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-inset dark:focus-visible:ring-zinc-500"
             :aria-label="`查看${candidate.name}详情`"
           >
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <span
-                  class="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-zinc-100 px-2 text-xs font-extrabold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-                >
-                  {{ index + 1 }}
-                </span>
+            <div class="pr-14">
+              <div class="min-w-0">
+                <h2 class="line-clamp-1 text-base font-bold leading-tight">
+                  {{ candidate.name }}
+                </h2>
                 <span
                   v-if="candidate.status !== 'open'"
-                  class="rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"
+                  class="mt-1 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"
                 >
                   {{ candidate.status === 'picked' ? '已选中' : '已吃过' }}
                 </span>
               </div>
-
-              <div class="shrink-0 text-right">
-                <div class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">推荐</div>
-                <div class="text-2xl font-black leading-none text-zinc-900 dark:text-zinc-50">
-                  {{ candidate.upvotes }}
-                </div>
-              </div>
             </div>
-
-            <h2 class="mt-4 line-clamp-2 min-h-10 text-base font-bold leading-tight">
-              {{ candidate.name }}
-            </h2>
 
             <div
-              class="mt-2 flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400"
+              class="mt-2 flex items-center gap-1.5 overflow-hidden text-sm text-zinc-500 dark:text-zinc-400"
             >
-              <MapPin :size="14" />
-              <span class="line-clamp-1">{{ getCandidateLocation(candidate) || '暂无位置' }}</span>
+              <MapPin :size="14" class="shrink-0" />
+              <span class="min-w-0 flex-1 truncate">
+                {{ getCandidateLocation(candidate) || '暂无位置' }}
+              </span>
             </div>
 
-            <div class="mt-4 flex min-h-8 flex-wrap items-center gap-1.5">
+            <div class="mt-1.5 flex min-h-7 items-center gap-1.5 overflow-hidden pr-24">
               <span
                 v-if="candidate.price !== null"
-                class="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-sm font-extrabold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
+                class="inline-flex h-6 shrink-0 items-center rounded-md bg-zinc-100 px-2 text-xs font-extrabold leading-none text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
               >
                 ¥{{ candidate.price }}/人
               </span>
               <span
                 v-for="tag in candidate.tags.slice(0, 2)"
                 :key="tag"
-                class="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                class="inline-flex h-6 shrink-0 items-center rounded-md bg-zinc-100 px-2 text-xs font-medium leading-none text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
               >
                 #{{ tag }}
               </span>
               <span
                 v-if="candidate.tags.length > 2"
-                class="rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                class="inline-flex h-6 shrink-0 items-center rounded-md bg-zinc-100 px-2 text-xs font-medium leading-none text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
               >
                 +{{ candidate.tags.length - 2 }}
               </span>
@@ -401,28 +401,25 @@ function saveUpvotedIds(ids: Set<string>) {
           </RouterLink>
 
           <div
-            class="flex items-center justify-between gap-3 border-t border-zinc-100 px-4 py-3 dark:border-zinc-800"
+            class="pointer-events-none absolute right-4 top-3 flex items-baseline gap-0.5 leading-none"
+            :class="getCandidateUpvoteToneClass(index)"
           >
-            <RouterLink
-              :to="`/candidates/${candidate.id}`"
-              class="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 dark:text-zinc-400 dark:hover:text-zinc-100"
-              :aria-label="`查看${candidate.name}详情`"
-            >
-              <span>查看详情</span>
-              <ArrowRight :size="14" />
-            </RouterLink>
-
-            <button
-              @click="handleUpvote(candidate)"
-              class="inline-flex min-h-11 min-w-[5.25rem] items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-sm font-bold text-white transition-colors hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
-              :disabled="upvotedIds.has(candidate.id) || upvotingId === candidate.id"
-              :aria-label="`推荐${candidate.name}`"
-            >
-              <LoaderCircle v-if="upvotingId === candidate.id" :size="14" class="animate-spin" />
-              <ArrowUp v-else :size="14" />
-              <span>{{ upvotedIds.has(candidate.id) ? '已顶' : '顶帖' }}</span>
-            </button>
+            <div class="text-[1.75rem] font-black">
+              {{ candidate.upvotes }}
+            </div>
+            <div class="text-[10px] font-bold opacity-75">推荐</div>
           </div>
+
+          <button
+            @click="handleUpvote(candidate)"
+            class="absolute bottom-3 right-4 z-10 inline-flex min-h-9 min-w-[5rem] items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-sm font-bold text-white transition-colors hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+            :disabled="upvotedIds.has(candidate.id) || upvotingId === candidate.id"
+            :aria-label="`推荐${candidate.name}`"
+          >
+            <LoaderCircle v-if="upvotingId === candidate.id" :size="14" class="animate-spin" />
+            <Triangle v-else :size="13" class="fill-current" />
+            <span>{{ upvotedIds.has(candidate.id) ? '已赞同' : '赞同' }}</span>
+          </button>
         </article>
       </TransitionGroup>
     </section>
@@ -660,3 +657,4 @@ function saveUpvotedIds(ids: Set<string>) {
   }
 }
 </style>
+

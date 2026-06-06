@@ -173,7 +173,7 @@ const isCurrentCityOption = (city: string) => {
     <button
       ref="filterButtonRef"
       @click="toggleFilterMenu"
-      class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[13px] font-bold border transition-all whitespace-nowrap focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+      class="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-[13px] font-bold border transition-all whitespace-nowrap focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
       :class="
         activeFilterCount > 0
           ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900'
