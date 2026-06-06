@@ -309,7 +309,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
     <header
       class="sticky top-0 z-30 bg-stone-100/92 dark:bg-zinc-950/88 backdrop-blur-md border-b border-stone-200 dark:border-zinc-800"
     >
-      <div class="max-w-5xl mx-auto px-4 py-4">
+      <div class="max-w-5xl mx-auto px-4 pt-3 pb-2 md:pt-3 md:pb-3">
         <div class="flex items-center justify-between gap-3">
           <button
             @click="goBack"
@@ -328,7 +328,7 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
       </div>
     </header>
 
-    <section class="max-w-5xl mx-auto px-4 py-4 md:py-6 space-y-4 md:space-y-5">
+    <section class="max-w-5xl mx-auto px-4 pt-3 pb-4 md:pt-3 md:pb-6 space-y-4 md:space-y-5">
       <div>
         <h1 class="text-2xl md:text-3xl font-bold tracking-tight">如何拥有大胃袋...</h1>
       </div>

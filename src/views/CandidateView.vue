@@ -238,7 +238,7 @@ function saveUpvotedIds(ids: Set<string>) {
     <header
       class="sticky top-0 z-30 border-b border-stone-200 bg-stone-100/92 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/88"
     >
-      <div class="mx-auto max-w-5xl px-4 py-4">
+      <div class="mx-auto max-w-5xl px-4 pt-3 pb-2 md:pt-3 md:pb-3">
         <div class="flex items-center justify-between gap-3">
           <button
             @click="goBack"
@@ -259,7 +259,7 @@ function saveUpvotedIds(ids: Set<string>) {
       </div>
     </header>
 
-    <section class="mx-auto max-w-5xl space-y-4 px-4 pt-4 md:pt-6">
+    <section class="mx-auto max-w-5xl space-y-4 px-4 pt-3 md:pt-3">
       <div
         class="rounded-2xl border border-zinc-200 bg-white/90 p-3.5 dark:border-zinc-800 dark:bg-zinc-900/80 md:p-4"
       >
