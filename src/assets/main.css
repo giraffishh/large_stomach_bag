@@ -44,6 +44,29 @@ html.cover-route-lock #app {
   filter: brightness(0.9);
 }
 
+.ui-pressable {
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition-property:
+    transform,
+    background-color,
+    border-color,
+    color,
+    box-shadow,
+    opacity;
+}
+
+.ui-pressable.is-pressed:not(:disabled),
+.ui-pressable:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.ui-pressable.ui-pressable-strong.is-pressed:not(:disabled),
+.ui-pressable.ui-pressable-strong:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
 .theme-transitioning *,
 .theme-transitioning *::before,
 .theme-transitioning *::after {
@@ -77,6 +100,13 @@ html.cover-route-lock #app {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ui-pressable.is-pressed:not(:disabled),
+  .ui-pressable:active:not(:disabled),
+  .ui-pressable.ui-pressable-strong.is-pressed:not(:disabled),
+  .ui-pressable.ui-pressable-strong:active:not(:disabled) {
+    transform: none;
+  }
+
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none;

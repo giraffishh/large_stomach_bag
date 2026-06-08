@@ -31,8 +31,9 @@ const { imageSrc, handleImageError } = useImageFallback(() =>
 
 <template>
   <RouterLink
+    v-pressable
     :to="`/restaurant/${restaurant.id}`"
-    class="group bg-white dark:bg-zinc-900 rounded-xl md:rounded-2xl overflow-hidden shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer border border-stone-200/60 dark:border-zinc-800 flex flex-row"
+    class="restaurant-card group bg-white dark:bg-zinc-900 rounded-xl md:rounded-2xl overflow-hidden shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer border border-stone-200/60 dark:border-zinc-800 flex flex-row"
     :class="[autoHeight ? 'min-h-[7rem] md:min-h-[12rem]' : 'h-28 md:h-48']"
   >
     <!-- Cover Image -->
@@ -102,3 +103,24 @@ const { imageSrc, handleImageError } = useImageFallback(() =>
     </div>
   </RouterLink>
 </template>
+
+<style scoped>
+.restaurant-card {
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    box-shadow 300ms ease,
+    background-color 180ms ease;
+}
+
+.restaurant-card.is-pressed {
+  background-color: rgb(250 250 250);
+  box-shadow: 0 1px 5px rgba(39, 39, 42, 0.06);
+}
+
+:global(.dark) .restaurant-card.is-pressed {
+  background-color: rgb(39 39 42);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+}
+</style>

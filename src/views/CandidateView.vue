@@ -134,7 +134,7 @@ async function handleUpvote(candidate: Candidate) {
     saveCandidateUpvotedIds(upvotedIds.value)
   } catch (error) {
     candidates.value = previousCandidates
-    loadError.value = error instanceof Error ? error.message : '赞同失败，请稍后重试。'
+    loadError.value = error instanceof Error ? error.message : '推荐失败，请稍后重试。'
   } finally {
     upvotingId.value = ''
   }
@@ -223,8 +223,9 @@ const getCandidateUpvoteToneClass = (index: number) => {
       <div class="mx-auto max-w-5xl px-4 pt-3 pb-2 md:pt-3 md:pb-3">
         <div class="flex items-center justify-between gap-3">
           <button
+            v-pressable
             @click="goBack"
-            class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus-visible:ring-offset-zinc-950"
+            class="ui-pressable ui-pressable-strong inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus-visible:ring-offset-zinc-950"
             aria-label="返回上一页"
           >
             <ArrowLeft :size="16" />
@@ -254,8 +255,9 @@ const getCandidateUpvoteToneClass = (index: number) => {
           </div>
 
           <button
+            v-pressable
             @click="openCreateForm"
-            class="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 py-1 pl-1 pr-2.5 text-sm font-bold text-zinc-900 shadow-[0_6px_16px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-all hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500 dark:focus-visible:ring-offset-zinc-900"
+            class="ui-pressable ui-pressable-strong inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 py-1 pl-1 pr-2.5 text-sm font-bold text-zinc-900 shadow-[0_6px_16px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-all hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500 dark:focus-visible:ring-offset-zinc-900"
           >
             <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100">
               <Plus :size="20" stroke-width="3.25" />
@@ -270,7 +272,7 @@ const getCandidateUpvoteToneClass = (index: number) => {
             <div class="mt-0.5 text-lg font-bold leading-tight">{{ candidates.length }}</div>
           </div>
           <div class="rounded-xl bg-stone-50 px-3 py-1.5 dark:bg-zinc-950/60">
-            <div class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">总赞同</div>
+            <div class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">总推荐</div>
             <div class="mt-0.5 text-lg font-bold leading-tight">{{ totalUpvotes }}</div>
           </div>
         </div>
@@ -283,8 +285,9 @@ const getCandidateUpvoteToneClass = (index: number) => {
         <div class="flex items-center justify-between gap-3">
           <span>{{ loadError }}</span>
           <button
+            v-pressable
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-semibold transition-colors hover:bg-rose-100 dark:hover:bg-rose-900/40"
+            class="ui-pressable ui-pressable-strong inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-semibold transition-colors hover:bg-rose-100 dark:hover:bg-rose-900/40"
             @click="loadCandidates"
           >
             <RefreshCw :size="14" />
@@ -309,8 +312,9 @@ const getCandidateUpvoteToneClass = (index: number) => {
         <h2 class="mt-3 text-base font-bold">还没有候选餐厅</h2>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">先让大家推荐第一家。</p>
         <button
+          v-pressable
           type="button"
-          class="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 py-1 pl-1 pr-2.5 text-sm font-bold text-zinc-900 shadow-[0_6px_16px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-all hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500"
+          class="ui-pressable ui-pressable-strong mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 py-1 pl-1 pr-2.5 text-sm font-bold text-zinc-900 shadow-[0_6px_16px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-all hover:bg-white hover:shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500"
           @click="openCreateForm"
         >
           <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100">
@@ -329,11 +333,12 @@ const getCandidateUpvoteToneClass = (index: number) => {
         <article
           v-for="(candidate, index) in sortedCandidates"
           :key="candidate.id"
-          class="group relative overflow-hidden rounded-xl border border-stone-200/60 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.08)] dark:border-zinc-800 dark:bg-zinc-900"
+          class="candidate-card group relative overflow-hidden rounded-xl border border-stone-200/60 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.08)] dark:border-zinc-800 dark:bg-zinc-900"
         >
           <RouterLink
+            v-pressable
             :to="`/candidates/${candidate.id}`"
-            class="block cursor-pointer px-4 pb-3 pt-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-inset dark:focus-visible:ring-zinc-500"
+            class="candidate-card-link block cursor-pointer px-4 pb-3 pt-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-inset dark:focus-visible:ring-zinc-500"
             :aria-label="`查看${candidate.name}详情`"
           >
             <div class="pr-14">
@@ -393,14 +398,17 @@ const getCandidateUpvoteToneClass = (index: number) => {
           </div>
 
           <button
+            v-pressable
+            @pointerdown.stop
+            @touchstart.stop
             @click="handleUpvote(candidate)"
-            class="absolute bottom-3 right-4 z-10 inline-flex min-h-9 min-w-[5rem] items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-sm font-bold text-white transition-colors hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+            class="ui-pressable ui-pressable-strong absolute bottom-3 right-4 z-10 inline-flex min-h-9 min-w-[5rem] items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
             :disabled="upvotedIds.has(candidate.id) || upvotingId === candidate.id"
             :aria-label="`推荐${candidate.name}`"
           >
             <LoaderCircle v-if="upvotingId === candidate.id" :size="14" class="animate-spin" />
             <Triangle v-else :size="13" class="fill-current" />
-            <span>{{ upvotedIds.has(candidate.id) ? '已赞同' : '赞同' }}</span>
+            <span>{{ upvotedIds.has(candidate.id) ? '已推荐' : '推荐' }}</span>
           </button>
         </article>
       </TransitionGroup>
@@ -421,8 +429,9 @@ const getCandidateUpvoteToneClass = (index: number) => {
             <div class="flex items-center justify-between gap-3">
               <h2 class="text-lg font-bold">添加候选</h2>
               <button
+                v-pressable
                 type="button"
-                class="rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                class="ui-pressable ui-pressable-strong rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 aria-label="关闭"
                 @click="closeForm"
               >
@@ -485,15 +494,17 @@ const getCandidateUpvoteToneClass = (index: number) => {
 
             <div class="mt-5 flex justify-end gap-2">
               <button
+                v-pressable
                 type="button"
-                class="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                class="ui-pressable ui-pressable-strong rounded-xl border border-zinc-200 px-4 py-2 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 @click="closeForm"
               >
                 取消
               </button>
               <button
+                v-pressable
                 type="submit"
-                class="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-300 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                class="ui-pressable ui-pressable-strong inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-300 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
                 :disabled="isSaving"
               >
                 <LoaderCircle v-if="isSaving" :size="15" class="animate-spin" />
@@ -510,6 +521,34 @@ const getCandidateUpvoteToneClass = (index: number) => {
 <style scoped>
 .candidate-list {
   position: relative;
+}
+
+.candidate-card {
+  transform-origin: center;
+  transition:
+    transform 140ms ease,
+    box-shadow 300ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.candidate-card:has(.candidate-card-link.is-pressed) {
+  transform: translate3d(0, 1px, 0);
+  background-color: rgb(250 250 250);
+  box-shadow: 0 1px 5px rgba(39, 39, 42, 0.06);
+}
+
+:global(.dark) .candidate-card:has(.candidate-card-link.is-pressed) {
+  background-color: rgb(39 39 42);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+}
+
+.candidate-card-link {
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .candidate-list-move,

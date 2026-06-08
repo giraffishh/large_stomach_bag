@@ -119,8 +119,9 @@ function formatDate(value: string) {
       </div>
 
       <button
+        v-pressable
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-zinc-500 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+        class="ui-pressable ui-pressable-strong inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-zinc-500 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
         :disabled="isLoading"
         @click="loadComments"
       >
@@ -148,8 +149,9 @@ function formatDate(value: string) {
       <div class="flex items-center justify-between gap-3">
         <p class="text-xs text-zinc-400">{{ form.content.length }}/500</p>
         <button
+          v-pressable
           type="submit"
-          class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+          class="ui-pressable ui-pressable-strong inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
           :disabled="isSubmitting"
         >
           <LoaderCircle v-if="isSubmitting" :size="15" class="animate-spin" />
@@ -199,8 +201,9 @@ function formatDate(value: string) {
           </div>
 
           <button
+            v-pressable
             type="button"
-            class="shrink-0 rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
+            class="ui-pressable ui-pressable-strong shrink-0 rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
             :disabled="deletingId === comment.id"
             aria-label="删除评论"
             @click="deleteComment(comment)"

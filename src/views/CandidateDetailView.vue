@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft,
-  ArrowUp,
   CalendarClock,
   LoaderCircle,
   MapPin,
@@ -11,6 +10,7 @@ import {
   RefreshCw,
   Tag,
   Trash2,
+  Triangle,
   UserRound,
   X,
 } from 'lucide-vue-next'
@@ -182,7 +182,7 @@ async function handleUpvote() {
     saveCandidateUpvotedIds(upvotedIds.value)
   } catch (error) {
     candidate.value = previousCandidate
-    loadError.value = error instanceof Error ? error.message : '顶帖失败，请稍后重试。'
+    loadError.value = error instanceof Error ? error.message : '推荐失败，请稍后重试。'
   } finally {
     upvotingId.value = ''
   }
@@ -300,8 +300,9 @@ function clearDeleteConfirmTimer() {
       <div class="mx-auto max-w-4xl px-4 pt-3 pb-2 md:pt-3 md:pb-3">
         <div class="flex items-center justify-between gap-3">
           <button
+            v-pressable
             @click="goBack"
-            class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus-visible:ring-offset-zinc-950"
+            class="ui-pressable ui-pressable-strong inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus-visible:ring-offset-zinc-950"
             aria-label="返回候选名单"
           >
             <ArrowLeft :size="16" />
@@ -310,8 +311,9 @@ function clearDeleteConfirmTimer() {
 
           <button
             v-if="candidate && !isEditing"
+            v-pressable
             type="button"
-            class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus-visible:ring-offset-zinc-950"
+            class="ui-pressable ui-pressable-strong inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus-visible:ring-offset-zinc-950"
             @click="startEditing"
           >
             <Pencil :size="16" :stroke-width="2.75" />
@@ -329,8 +331,9 @@ function clearDeleteConfirmTimer() {
         <div class="flex items-center justify-between gap-3">
           <span>{{ loadError }}</span>
           <button
+            v-pressable
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-semibold transition-colors hover:bg-rose-100 dark:hover:bg-rose-900/40"
+            class="ui-pressable ui-pressable-strong inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-semibold transition-colors hover:bg-rose-100 dark:hover:bg-rose-900/40"
             @click="loadCandidate"
           >
             <RefreshCw :size="14" />
@@ -360,8 +363,9 @@ function clearDeleteConfirmTimer() {
           <div class="flex items-center justify-between gap-3">
             <h1 class="text-xl font-bold tracking-tight md:text-2xl">编辑候选</h1>
             <button
+              v-pressable
               type="button"
-              class="rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              class="ui-pressable ui-pressable-strong rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
               aria-label="取消编辑"
               @click="cancelEditing"
             >
@@ -424,8 +428,9 @@ function clearDeleteConfirmTimer() {
 
           <div class="mt-5 flex justify-between gap-2">
             <button
+              v-pressable
               type="button"
-              class="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+              class="ui-pressable ui-pressable-strong inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
               :class="
                 deleteConfirmArmed
                   ? 'border-rose-500 bg-rose-600 text-white hover:bg-rose-700 dark:border-rose-400 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-400'
@@ -441,15 +446,17 @@ function clearDeleteConfirmTimer() {
 
             <div class="flex gap-2">
               <button
+                v-pressable
                 type="button"
-                class="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                class="ui-pressable ui-pressable-strong rounded-xl border border-zinc-200 px-4 py-2 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 @click="cancelEditing"
               >
                 取消
               </button>
               <button
+                v-pressable
                 type="submit"
-                class="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-300 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                class="ui-pressable ui-pressable-strong inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-300 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
                 :disabled="isSaving"
               >
                 <LoaderCircle v-if="isSaving" :size="15" class="animate-spin" />
@@ -524,14 +531,15 @@ function clearDeleteConfirmTimer() {
               </div>
 
               <button
+                v-pressable
                 type="button"
-                class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                class="ui-pressable ui-pressable-strong inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
                 :disabled="isUpvoted || upvotingId === candidate.id"
                 @click="handleUpvote"
               >
                 <LoaderCircle v-if="upvotingId === candidate.id" :size="15" class="animate-spin" />
-                <ArrowUp v-else :size="15" />
-                <span>{{ isUpvoted ? '已推荐' : '推荐一下' }}</span>
+                <Triangle v-else :size="15" class="fill-current" />
+                <span>{{ isUpvoted ? '已推荐' : '推荐' }}</span>
               </button>
             </div>
           </div>

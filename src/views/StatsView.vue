@@ -312,8 +312,9 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
       <div class="max-w-5xl mx-auto px-4 pt-3 pb-2 md:pt-3 md:pb-3">
         <div class="flex items-center justify-between gap-3">
           <button
+            v-pressable
             @click="goBack"
-            class="stats-pressable inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-200"
+            class="ui-pressable stats-pressable inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-200"
             aria-label="返回主页"
           >
             <ArrowLeft :size="16" />
@@ -386,8 +387,9 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
             <button
               v-for="row in ratingBreakdown"
               :key="row.label"
+              v-pressable
               type="button"
-              class="stats-pressable relative overflow-hidden flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-2.5 border border-stone-200 dark:border-zinc-800 text-left"
+              class="ui-pressable stats-pressable relative overflow-hidden flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-2.5 border border-stone-200 dark:border-zinc-800 text-left"
               @click="goToRatingFilter(row.label)"
             >
               <div
@@ -426,8 +428,9 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
             <button
               v-for="row in cityBreakdown"
               :key="row.label"
+              v-pressable
               type="button"
-              class="stats-pressable relative overflow-hidden w-full rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-1.5 border border-stone-200 dark:border-zinc-800 text-left"
+              class="ui-pressable stats-pressable relative overflow-hidden w-full rounded-2xl bg-stone-50 dark:bg-zinc-950/70 px-3 py-1.5 border border-stone-200 dark:border-zinc-800 text-left"
               @click="goToCityFilter(row.label)"
             >
               <div
@@ -549,8 +552,9 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
             <button
               v-for="tag in topTags"
               :key="tag.label"
+              v-pressable
               type="button"
-              class="stats-pressable inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950/70 px-2.5 py-1.5 text-[13px]"
+              class="ui-pressable stats-pressable inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-950/70 px-2.5 py-1.5 text-[13px]"
               @click="goToTagFilter(tag.label)"
             >
               <Hash :size="13" class="text-orange-500" />
@@ -571,8 +575,6 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
 <style scoped>
 .stats-pressable {
   cursor: pointer;
-  user-select: none;
-  touch-action: manipulation;
   transition:
     background-color 180ms ease,
     box-shadow 180ms ease,
@@ -580,15 +582,16 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
     transform 140ms ease;
 }
 
+.stats-pressable.is-pressed,
 .stats-pressable:active {
-  transform: scale(0.98);
   background-color: rgb(255 255 255);
-  box-shadow: inset 0 1px 5px rgb(39 39 42 / 0.12);
+  box-shadow: none;
 }
 
+:global(.dark) .stats-pressable.is-pressed,
 :global(.dark) .stats-pressable:active {
   background-color: rgb(39 39 42 / 0.92);
-  box-shadow: inset 0 1px 4px rgb(0 0 0 / 0.28);
+  box-shadow: none;
 }
 
 .stats-pressable:focus-visible {
@@ -619,10 +622,6 @@ function buildBreakdown(items: string[], total: number): StatRow[] {
 @media (prefers-reduced-motion: reduce) {
   .stats-pressable {
     transition: none;
-  }
-
-  .stats-pressable:active {
-    transform: none;
   }
 }
 </style>
