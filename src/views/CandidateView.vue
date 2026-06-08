@@ -13,8 +13,7 @@ import {
 } from 'lucide-vue-next'
 import { createCandidate, fetchCandidates, upvoteCandidate } from '@/services/candidates'
 import type { Candidate, CandidateInput } from '@/types/candidate'
-
-const CANDIDATE_UPVOTES_KEY = 'candidateUpvotes'
+import { loadCandidateUpvotedIds, saveCandidateUpvotedIds } from '@/utils/candidateUpvotes'
 
 const router = useRouter()
 const candidates = ref<Candidate[]>([])
@@ -24,7 +23,7 @@ const saveError = ref('')
 const isSaving = ref(false)
 const upvotingId = ref('')
 const showForm = ref(false)
-const upvotedIds = ref<Set<string>>(loadUpvotedIds())
+const upvotedIds = ref<Set<string>>(loadCandidateUpvotedIds())
 
 const form = reactive({
   name: '',
@@ -132,7 +131,7 @@ async function handleUpvote(candidate: Candidate) {
     const updatedCandidate = await upvoteCandidate(candidate.id)
     upsertCandidate(updatedCandidate)
     upvotedIds.value = new Set([...upvotedIds.value, candidate.id])
-    saveUpvotedIds(upvotedIds.value)
+    saveCandidateUpvotedIds(upvotedIds.value)
   } catch (error) {
     candidates.value = previousCandidates
     loadError.value = error instanceof Error ? error.message : '赞同失败，请稍后重试。'
@@ -214,23 +213,6 @@ const getCandidateUpvoteToneClass = (index: number) => {
   return 'text-zinc-900 dark:text-zinc-50'
 }
 
-function loadUpvotedIds(): Set<string> {
-  try {
-    const storedIds = window.localStorage.getItem(CANDIDATE_UPVOTES_KEY)
-    if (!storedIds) {
-      return new Set()
-    }
-
-    const ids = JSON.parse(storedIds) as string[]
-    return new Set(Array.isArray(ids) ? ids : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function saveUpvotedIds(ids: Set<string>) {
-  window.localStorage.setItem(CANDIDATE_UPVOTES_KEY, JSON.stringify([...ids]))
-}
 </script>
 
 <template>

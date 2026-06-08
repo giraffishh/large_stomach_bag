@@ -22,8 +22,7 @@ import {
 } from '@/services/candidates'
 import CandidateComments from '@/components/CandidateComments.vue'
 import type { Candidate, CandidateInput } from '@/types/candidate'
-
-const CANDIDATE_UPVOTES_KEY = 'candidateUpvotes'
+import { loadCandidateUpvotedIds, saveCandidateUpvotedIds } from '@/utils/candidateUpvotes'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,7 +36,7 @@ const upvotingId = ref('')
 const isDeleting = ref(false)
 const deleteConfirmArmed = ref(false)
 let deleteConfirmTimer: ReturnType<typeof setTimeout> | null = null
-const upvotedIds = ref<Set<string>>(loadUpvotedIds())
+const upvotedIds = ref<Set<string>>(loadCandidateUpvotedIds())
 
 const form = reactive({
   name: '',
@@ -180,7 +179,7 @@ async function handleUpvote() {
     const updatedCandidate = await upvoteCandidate(previousCandidate.id)
     candidate.value = updatedCandidate
     upvotedIds.value = new Set([...upvotedIds.value, previousCandidate.id])
-    saveUpvotedIds(upvotedIds.value)
+    saveCandidateUpvotedIds(upvotedIds.value)
   } catch (error) {
     candidate.value = previousCandidate
     loadError.value = error instanceof Error ? error.message : '顶帖失败，请稍后重试。'
@@ -267,24 +266,6 @@ const formatDate = (value: string) => {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date)
-}
-
-function loadUpvotedIds(): Set<string> {
-  try {
-    const storedIds = window.localStorage.getItem(CANDIDATE_UPVOTES_KEY)
-    if (!storedIds) {
-      return new Set()
-    }
-
-    const ids = JSON.parse(storedIds) as string[]
-    return new Set(Array.isArray(ids) ? ids : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function saveUpvotedIds(ids: Set<string>) {
-  window.localStorage.setItem(CANDIDATE_UPVOTES_KEY, JSON.stringify([...ids]))
 }
 
 function armDeleteConfirm() {
