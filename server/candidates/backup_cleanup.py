@@ -39,6 +39,19 @@ def cleanup_hidden_candidates():
     ).replace("+00:00", "Z")
 
     with sqlite3.connect(DB_PATH) as connection:
+        hidden_ids = [
+            row[0]
+            for row in connection.execute(
+                "SELECT id FROM candidates WHERE status = 'hidden' AND updated_at < ?",
+                (cutoff,),
+            ).fetchall()
+        ]
+        if hidden_ids:
+            placeholders = ",".join("?" for _ in hidden_ids)
+            connection.execute(
+                f"DELETE FROM candidate_comments WHERE candidate_id IN ({placeholders})",
+                hidden_ids,
+            )
         cursor = connection.execute(
             "DELETE FROM candidates WHERE status = 'hidden' AND updated_at < ?",
             (cutoff,),

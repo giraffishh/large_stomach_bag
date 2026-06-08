@@ -24,3 +24,17 @@ export interface CandidateInput {
   reason: string
   submitter: string
 }
+
+export interface CandidateComment {
+  id: string
+  candidateId: string
+  author: string
+  content: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CandidateCommentInput {
+  author: string
+  content: string
+}

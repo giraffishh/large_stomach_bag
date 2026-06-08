@@ -1,4 +1,9 @@
-import type { Candidate, CandidateInput } from '@/types/candidate'
+import type {
+  Candidate,
+  CandidateComment,
+  CandidateCommentInput,
+  CandidateInput,
+} from '@/types/candidate'
 
 type ApiSuccess<T> = {
   ok: true
@@ -55,6 +60,40 @@ export async function deleteCandidate(candidateId: string): Promise<Candidate> {
   const response = await request<Candidate>(`/candidates/${encodeURIComponent(candidateId)}`, {
     method: 'DELETE',
   })
+  return response
+}
+
+export async function fetchCandidateComments(candidateId: string): Promise<CandidateComment[]> {
+  const response = await request<CandidateComment[]>(
+    `/candidates/${encodeURIComponent(candidateId)}/comments`,
+  )
+  return response
+}
+
+export async function createCandidateComment(
+  candidateId: string,
+  comment: CandidateCommentInput,
+): Promise<CandidateComment> {
+  const response = await request<CandidateComment>(
+    `/candidates/${encodeURIComponent(candidateId)}/comments`,
+    {
+      method: 'POST',
+      body: JSON.stringify(comment),
+    },
+  )
+  return response
+}
+
+export async function deleteCandidateComment(
+  candidateId: string,
+  commentId: string,
+): Promise<CandidateComment> {
+  const response = await request<CandidateComment>(
+    `/candidates/${encodeURIComponent(candidateId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: 'DELETE',
+    },
+  )
   return response
 }
 

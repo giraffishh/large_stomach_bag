@@ -23,6 +23,7 @@ ALLOWED_ORIGINS = [
 MAX_TAGS = 8
 MAX_BODY_BYTES = int(os.environ.get("MAX_BODY_BYTES", "32768"))
 MAX_LIST_ITEMS = int(os.environ.get("MAX_LIST_ITEMS", "500"))
+MAX_COMMENT_ITEMS = int(os.environ.get("MAX_COMMENT_ITEMS", "200"))
 MAX_AUDIT_PAYLOAD_LENGTH = 1200
 
 
@@ -88,6 +89,28 @@ def init_database():
             """
             CREATE INDEX IF NOT EXISTS idx_candidate_audit_logs_candidate_id
             ON candidate_audit_logs(candidate_id)
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS candidate_comments (
+                id TEXT PRIMARY KEY,
+                candidate_id TEXT NOT NULL,
+                author TEXT NOT NULL DEFAULT '',
+                content TEXT NOT NULL,
+                ip TEXT NOT NULL DEFAULT '',
+                user_agent TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'visible',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(candidate_id) REFERENCES candidates(id) ON DELETE CASCADE
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_candidate_comments_visible_sort
+            ON candidate_comments(candidate_id, status, created_at DESC)
             """
         )
 
@@ -164,6 +187,20 @@ def sanitize_tags(value):
     return tags
 
 
+def sanitize_comment_input(payload):
+    if not isinstance(payload, dict):
+        payload = {}
+
+    content = sanitize_string(payload.get("content"), 500)
+    if len(content) < 2:
+        raise PublicError(HTTPStatus.BAD_REQUEST, "评论至少需要 2 个字。")
+
+    return {
+        "author": sanitize_string(payload.get("author"), 40),
+        "content": content,
+    }
+
+
 def list_candidates():
     with get_connection() as connection:
         rows = connection.execute(
@@ -177,6 +214,107 @@ def list_candidates():
             (MAX_LIST_ITEMS,),
         ).fetchall()
     return [candidate_from_row(row) for row in rows]
+
+
+def comment_from_row(row):
+    return {
+        "id": row["id"],
+        "candidateId": row["candidate_id"],
+        "author": row["author"],
+        "content": row["content"],
+        "createdAt": row["created_at"],
+        "updatedAt": row["updated_at"],
+    }
+
+
+def list_candidate_comments(candidate_id):
+    with get_connection() as connection:
+        ensure_candidate_exists(connection, candidate_id)
+        rows = connection.execute(
+            """
+            SELECT *
+            FROM candidate_comments
+            WHERE candidate_id = ? AND status = 'visible'
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (candidate_id, MAX_COMMENT_ITEMS),
+        ).fetchall()
+    return [comment_from_row(row) for row in rows]
+
+
+def create_candidate_comment(candidate_id, payload, context):
+    comment = sanitize_comment_input(payload)
+    timestamp = now_iso()
+    comment_id = f"comment_{int(time.time() * 1000)}_{secrets.token_hex(4)}"
+
+    with get_connection() as connection:
+        ensure_candidate_exists(connection, candidate_id)
+        connection.execute(
+            """
+            INSERT INTO candidate_comments (
+                id, candidate_id, author, content, ip, user_agent,
+                status, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 'visible', ?, ?)
+            """,
+            (
+                comment_id,
+                candidate_id,
+                comment["author"],
+                comment["content"],
+                context["ip"],
+                context["userAgent"],
+                timestamp,
+                timestamp,
+            ),
+        )
+        row = connection.execute(
+            "SELECT * FROM candidate_comments WHERE id = ?",
+            (comment_id,),
+        ).fetchone()
+        write_audit_log(connection, "comment_create", candidate_id, context, comment)
+
+    return comment_from_row(row)
+
+
+def delete_candidate_comment(candidate_id, comment_id, context):
+    timestamp = now_iso()
+
+    with get_connection() as connection:
+        ensure_candidate_exists(connection, candidate_id)
+        row = connection.execute(
+            """
+            SELECT *
+            FROM candidate_comments
+            WHERE id = ? AND candidate_id = ? AND status = 'visible'
+            """,
+            (comment_id, candidate_id),
+        ).fetchone()
+        if row is None:
+            raise PublicError(HTTPStatus.NOT_FOUND, "没有找到这条评论。")
+
+        connection.execute(
+            """
+            UPDATE candidate_comments
+            SET status = 'hidden', updated_at = ?
+            WHERE id = ? AND candidate_id = ?
+            """,
+            (timestamp, comment_id, candidate_id),
+        )
+        write_audit_log(
+            connection,
+            "comment_delete",
+            candidate_id,
+            context,
+            {
+                "commentId": comment_id,
+                "author": row["author"],
+                "content": row["content"],
+            },
+        )
+
+    return comment_from_row(row)
 
 
 def create_candidate(payload, context):
@@ -293,6 +431,14 @@ def archive_candidate(candidate_id, context):
             """,
             (timestamp, candidate_id),
         )
+        connection.execute(
+            """
+            UPDATE candidate_comments
+            SET status = 'hidden', updated_at = ?
+            WHERE candidate_id = ? AND status = 'visible'
+            """,
+            (timestamp, candidate_id),
+        )
         row = connection.execute("SELECT * FROM candidates WHERE id = ?", (candidate_id,)).fetchone()
         write_audit_log(
             connection,
@@ -376,6 +522,9 @@ class CandidateRequestHandler(BaseHTTPRequestHandler):
             if route["action"] == "list":
                 self.send_json({"ok": True, "data": list_candidates()})
                 return
+            if route["action"] == "comments":
+                self.send_json({"ok": True, "data": list_candidate_comments(route["id"])})
+                return
             raise PublicError(HTTPStatus.NOT_FOUND, "未找到候选名单接口。")
         except PublicError as error:
             self.send_error_json(error.status, error.message)
@@ -385,6 +534,7 @@ class CandidateRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
+            self.ensure_allowed_mutation_request(require_json_body=True)
             route = self.parse_route()
             context = self.get_request_context()
             if route["action"] == "list":
@@ -396,6 +546,15 @@ class CandidateRequestHandler(BaseHTTPRequestHandler):
             if route["action"] == "upvote":
                 self.send_json({"ok": True, "data": upvote_candidate(route["id"], context)})
                 return
+            if route["action"] == "comments":
+                self.send_json(
+                    {
+                        "ok": True,
+                        "data": create_candidate_comment(route["id"], self.read_json(), context),
+                    },
+                    HTTPStatus.CREATED,
+                )
+                return
             raise PublicError(HTTPStatus.NOT_FOUND, "未找到候选名单接口。")
         except PublicError as error:
             self.send_error_json(error.status, error.message)
@@ -405,6 +564,7 @@ class CandidateRequestHandler(BaseHTTPRequestHandler):
 
     def do_PATCH(self):
         try:
+            self.ensure_allowed_mutation_request(require_json_body=True)
             route = self.parse_route()
             if route["action"] == "detail":
                 self.send_json(
@@ -427,12 +587,25 @@ class CandidateRequestHandler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         try:
+            self.ensure_allowed_mutation_request()
             route = self.parse_route()
             if route["action"] == "detail":
                 self.send_json(
                     {
                         "ok": True,
                         "data": archive_candidate(route["id"], self.get_request_context()),
+                    }
+                )
+                return
+            if route["action"] == "comment_detail":
+                self.send_json(
+                    {
+                        "ok": True,
+                        "data": delete_candidate_comment(
+                            route["id"],
+                            route["commentId"],
+                            self.get_request_context(),
+                        ),
                     }
                 )
                 return
@@ -455,6 +628,17 @@ class CandidateRequestHandler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             raise PublicError(HTTPStatus.BAD_REQUEST, "请求内容不是合法 JSON。")
 
+    def ensure_allowed_mutation_request(self, require_json_body=False):
+        origin = self.headers.get("Origin", "")
+        if origin and not resolve_allowed_origin(origin):
+            raise PublicError(HTTPStatus.FORBIDDEN, "不允许的请求来源。")
+
+        if require_json_body:
+            content_type = self.headers.get("Content-Type", "")
+            media_type = content_type.split(";", 1)[0].strip().lower()
+            if media_type != "application/json":
+                raise PublicError(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "请求内容必须是 JSON。")
+
     def parse_route(self):
         path = urlparse(self.path).path.strip("/")
         segments = [unquote(segment) for segment in path.split("/") if segment]
@@ -465,8 +649,16 @@ class CandidateRequestHandler(BaseHTTPRequestHandler):
             return {"action": "list"}
         if len(segments) == 2 and segments[0] == "candidates":
             return {"action": "detail", "id": segments[1]}
+        if len(segments) == 3 and segments[0] == "candidates" and segments[2] == "comments":
+            return {"action": "comments", "id": segments[1]}
         if len(segments) == 3 and segments[0] == "candidates" and segments[2] == "upvote":
             return {"action": "upvote", "id": segments[1]}
+        if (
+            len(segments) == 4
+            and segments[0] == "candidates"
+            and segments[2] == "comments"
+        ):
+            return {"action": "comment_detail", "id": segments[1], "commentId": segments[3]}
 
         return {"action": "unknown"}
 

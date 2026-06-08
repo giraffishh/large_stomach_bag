@@ -33,6 +33,10 @@ coverage
 
 .eslintcache
 
+# Python
+__pycache__/
+*.pyc
+
 # Cypress
 /cypress/videos/
 /cypress/screenshots/
