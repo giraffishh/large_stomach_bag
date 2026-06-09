@@ -14,7 +14,7 @@ const emit = defineEmits<{
 const ratingLevels = [
   { label: '夯', description: '有点惊艳，会再带别人来吃' },
   { label: '人上人', description: '不错，大概率会二刷' },
-  { label: 'npc', description: '中规中矩，能吃，没有二刷的欲望' },
+  { label: 'npc', description: '一般，能吃，没有二刷的欲望' },
   { label: '拉完了', description: '拉完了' },
 ]
 
