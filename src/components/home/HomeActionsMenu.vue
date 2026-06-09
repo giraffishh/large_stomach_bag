@@ -209,10 +209,10 @@ onBeforeRouteLeave(() => {
           <button
             @click="goToCandidates"
             class="action-menu-item"
-            title="候选名单"
-            aria-label="候选名单"
+            title="候选投稿"
+            aria-label="候选投稿"
           >
-            <span class="action-menu-label">候选名单</span>
+            <span class="action-menu-label">候选投稿</span>
             <span class="action-menu-icon">
               <ClipboardList :size="18" class="md:w-5 md:h-5" />
             </span>

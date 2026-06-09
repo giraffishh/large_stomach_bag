@@ -262,7 +262,7 @@ const getCandidateUpvoteToneClass = (index: number) => {
             <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100">
               <Plus :size="20" stroke-width="3.25" />
             </span>
-            <span class="text-[15px] leading-none">添加</span>
+            <span class="text-[15px] leading-none">投稿</span>
           </button>
         </div>
 
@@ -320,7 +320,7 @@ const getCandidateUpvoteToneClass = (index: number) => {
           <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100">
             <Plus :size="20" stroke-width="3.25" />
           </span>
-          <span class="text-[15px] leading-none">添加候选</span>
+          <span class="text-[15px] leading-none">添加投稿</span>
         </button>
       </div>
 
@@ -427,7 +427,7 @@ const getCandidateUpvoteToneClass = (index: number) => {
             @submit.prevent="submitForm"
           >
             <div class="flex items-center justify-between gap-3">
-              <h2 class="text-lg font-bold">添加候选</h2>
+              <h2 class="text-lg font-bold">添加投稿</h2>
               <button
                 v-pressable
                 type="button"
