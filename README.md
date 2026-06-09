@@ -1,17 +1,11 @@
-# large_stomach_bag
+# 我也想拥有大胃袋...
 
-我也想拥有大卫带。这个项目是一个 Vue 3 餐厅记录站点，用来展示“已经吃过”的餐厅、地图点位、统计信息，以及给朋友提交新餐厅建议的候选名单。
+这个项目是一个 Vue 3 餐厅记录站点，用来展示“已经吃过”的餐厅、地图点位、统计信息，以及给朋友提交新餐厅建议的候选名单。
 
-线上前端部署在 Netlify：
+线上前端部署在 [![Netlify Status](https://api.netlify.com/api/v1/badges/5ec33ec4-1545-4a80-bc82-b40f07688853/deploy-status)](https://app.netlify.com/projects/largestomachbag/deploys)
 
 ```text
 https://food.giraffish.top
-```
-
-候选名单 API 独立部署在服务器：
-
-```text
-https://foodtotry.giraffish.top
 ```
 
 ## 功能
@@ -75,7 +69,7 @@ npm run build
 
 ## 环境变量
 
-本地创建 `.env`。不要提交 `.env`，仓库中只保留变量名和说明。
+本地 `.env`
 
 ```sh
 VITE_AMAP_JS_KEY=your_amap_browser_js_key
@@ -86,7 +80,7 @@ NOTION_DB_ID=your_notion_database_id
 GITHUB_TOKEN=your_optional_image_hosting_token
 VITE_TWIKOO_ENV_ID=your_optional_twikoo_env_id
 VITE_TWIKOO_SCRIPT_SRC=your_optional_twikoo_script_src
-VITE_CANDIDATE_API_BASE=https://foodtotry.giraffish.top
+VITE_CANDIDATE_API_BASE=your_candidate_api_base_url
 ```
 
 说明：
@@ -96,7 +90,7 @@ VITE_CANDIDATE_API_BASE=https://foodtotry.giraffish.top
 - `NOTION_KEY` 和 `NOTION_DB_ID` 用于同步已吃过餐厅数据。
 - `GITHUB_TOKEN` 可选，用于图片托管相关同步流程。
 - `VITE_TWIKOO_ENV_ID` 和 `VITE_TWIKOO_SCRIPT_SRC` 可选，用于详情页评论。
-- `VITE_CANDIDATE_API_BASE` 可选；代码默认请求 `https://foodtotry.giraffish.top`。
+- `VITE_CANDIDATE_API_BASE` 可选，用于覆盖候选名单 API 地址。
 
 ## 路由
 
@@ -150,6 +144,9 @@ src/
    ├─ RestaurantMap.vue
    ├─ TwikooComments.vue
    └─ home/
+      ├─ HomeActionsMenu.vue
+      ├─ HomeAboutModal.vue
+      ├─ HomeHeaderToolbar.vue
       ├─ HomeSearchBar.vue
       ├─ RestaurantFilterDropdown.vue
       ├─ RestaurantSortDropdown.vue
