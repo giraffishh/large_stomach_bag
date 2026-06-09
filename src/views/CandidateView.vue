@@ -534,13 +534,14 @@ const getCandidateUpvoteToneClass = (index: number) => {
   backface-visibility: hidden;
 }
 
-.candidate-card:has(.candidate-card-link.is-pressed) {
+:global(html:not(.dark) .candidate-card:has(.candidate-card-link.is-pressed)) {
   transform: translate3d(0, 1px, 0);
   background-color: rgb(250 250 250);
   box-shadow: 0 1px 5px rgba(39, 39, 42, 0.06);
 }
 
-:global(.dark) .candidate-card:has(.candidate-card-link.is-pressed) {
+:global(html.dark .candidate-card:has(.candidate-card-link.is-pressed)) {
+  transform: translate3d(0, 1px, 0);
   background-color: rgb(39 39 42);
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
 }

@@ -114,12 +114,12 @@ const { imageSrc, handleImageError } = useImageFallback(() =>
     background-color 180ms ease;
 }
 
-.restaurant-card.is-pressed {
+:global(html:not(.dark) .restaurant-card.is-pressed) {
   background-color: rgb(250 250 250);
   box-shadow: 0 1px 5px rgba(39, 39, 42, 0.06);
 }
 
-:global(.dark) .restaurant-card.is-pressed {
+:global(html.dark .restaurant-card.is-pressed) {
   background-color: rgb(39 39 42);
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
 }
