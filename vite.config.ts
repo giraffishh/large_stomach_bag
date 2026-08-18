@@ -63,6 +63,20 @@ export default defineConfig({
             },
           },
           {
+            urlPattern: /^https:\/\/cdn\.giraffish\.top\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'restaurant-images-backup-cdn',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {

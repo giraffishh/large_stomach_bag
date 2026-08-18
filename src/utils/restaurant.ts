@@ -4,6 +4,15 @@ type RestaurantLocationSource = Pick<Restaurant, 'location' | 'shareLink'>
 type RestaurantImageSource = Pick<Restaurant, 'cover' | 'coverUrl'>
 
 const URL_PATTERN = /https?:\/\/[^\s\])]+/
+const SUSTECH_IMAGE_PREFIX =
+  'https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/'
+const BACKUP_CDN_PREFIX = 'https://cdn.giraffish.top/'
+
+function getBackupImageUrl(imageUrl: string): string {
+  if (!imageUrl.startsWith(SUSTECH_IMAGE_PREFIX)) return ''
+
+  return `${BACKUP_CDN_PREFIX}${imageUrl.slice(SUSTECH_IMAGE_PREFIX.length)}`
+}
 
 export function getDisplayAddress(restaurant: RestaurantLocationSource): string {
   if (restaurant.location) return restaurant.location
@@ -39,5 +48,9 @@ export function getRestaurantImageSources(
   restaurant: RestaurantImageSource | null | undefined,
   placeholder: string,
 ): string[] {
-  return [...new Set([restaurant?.coverUrl || '', restaurant?.cover || '', placeholder].filter(Boolean))]
+  const coverUrl = restaurant?.coverUrl || ''
+
+  return [coverUrl, getBackupImageUrl(coverUrl), restaurant?.cover || '', placeholder].filter(
+    (source, index, sources) => Boolean(source) && sources.indexOf(source) === index,
+  )
 }
