@@ -27,8 +27,6 @@ const GITHUB_REPO = 'image-hosting'
 const GITHUB_PATH_PREFIX = 'food'
 // Public CDN base for uploaded food images
 const CDN_PREFIX = `https://cdn.giraffish.top/${GITHUB_PATH_PREFIX}`;
-const LEGACY_CDN_PREFIX =
-  'https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/food/'
 
 // AMap Web Service Key
 const AMAP_KEY = process.env.AMAP_KEY;
@@ -223,16 +221,6 @@ async function simplifyPage(page) {
 
   // CoverURL (Link)
   let coverUrl = props.CoverURL?.url || ''
-
-  // Migrate existing Notion links before checking whether an upload is needed.
-  if (coverUrl.startsWith(LEGACY_CDN_PREFIX)) {
-    const migratedUrl = `${CDN_PREFIX}/${coverUrl.slice(LEGACY_CDN_PREFIX.length)}`
-    await notion.pages.update({
-      page_id: page.id,
-      properties: { CoverURL: { url: migratedUrl } },
-    })
-    coverUrl = migratedUrl
-  }
 
   // Logic:
   // 1. Must have a Cover image source.

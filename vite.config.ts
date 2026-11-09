@@ -49,20 +49,6 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/mirrors\.sustech\.edu\.cn\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'restaurant-images-static',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
             urlPattern: /^https:\/\/cdn\.giraffish\.top\/.*/i,
             handler: 'CacheFirst',
             options: {
