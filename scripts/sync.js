@@ -25,8 +25,8 @@ const octokit = process.env.GITHUB_TOKEN ? new Octokit({ auth: process.env.GITHU
 const GITHUB_OWNER = 'giraffishh'
 const GITHUB_REPO = 'image-hosting'
 const GITHUB_PATH_PREFIX = 'food'
-// User explicitly requested 'giraffish' (one h) in the mirror URL
-const CDN_PREFIX = `https://mirrors.sustech.edu.cn/git/giraffish/image-hosting/-/raw/main/${GITHUB_PATH_PREFIX}`;
+// Public CDN base for uploaded food images
+const CDN_PREFIX = `https://cdn.giraffish.top/${GITHUB_PATH_PREFIX}`;
 
 // AMap Web Service Key
 const AMAP_KEY = process.env.AMAP_KEY;
