@@ -33,7 +33,6 @@ export default defineConfig({
         ],
       },
       workbox: {
-        importScripts: ['/sw-image-cache-reset.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/prod-files-secure\.s3\.us-west-2\.amazonaws\.com\/.*/i,
@@ -45,7 +44,7 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
               },
               cacheableResponse: {
-                statuses: [200],
+                statuses: [0, 200],
               },
             },
           },
@@ -59,7 +58,7 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
               cacheableResponse: {
-                statuses: [200],
+                statuses: [0, 200],
               },
             },
           },
@@ -73,7 +72,7 @@ export default defineConfig({
                 maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
               },
               cacheableResponse: {
-                statuses: [200],
+                statuses: [0, 200],
               },
             },
           },
