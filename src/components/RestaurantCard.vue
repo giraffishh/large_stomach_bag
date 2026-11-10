@@ -24,7 +24,7 @@ const store = useRestaurantStore()
 const displayAddress = computed(() => getDisplayAddress(props.restaurant))
 const distanceLabel = computed(() => store.getDistance(props.restaurant))
 const imagePlaceholder = 'https://placehold.co/600x400?text=No+Image'
-const { imageSrc, handleImageError } = useImageFallback(() =>
+const { imageSrc, imageCrossOrigin, handleImageError } = useImageFallback(() =>
   getRestaurantImageSources(props.restaurant, imagePlaceholder),
 )
 </script>
@@ -39,7 +39,7 @@ const { imageSrc, handleImageError } = useImageFallback(() =>
     <!-- Cover Image -->
     <div class="w-28 md:w-48 lg:w-64 shrink-0 overflow-hidden relative self-stretch">
       <img
-        :crossorigin="imageSrc.startsWith('https://cdn.giraffish.top/') ? 'anonymous' : undefined"
+        :crossorigin="imageCrossOrigin"
         :src="imageSrc"
         :loading="priority ? 'eager' : 'lazy'"
         :fetchpriority="priority ? 'high' : 'auto'"
