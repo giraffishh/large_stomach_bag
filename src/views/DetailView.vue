@@ -56,6 +56,7 @@ const goBack = () => {
     <!-- Hero Image -->
     <div class="relative h-64 md:h-96 w-full overflow-hidden">
       <img
+        :crossorigin="imageSrc.startsWith('https://cdn.giraffish.top/') ? 'anonymous' : undefined"
         :src="imageSrc"
         class="theme-dimmable-image detail-hero-image w-full h-full object-cover"
         :alt="`${restaurant.name} 封面图片`"
