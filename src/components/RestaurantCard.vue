@@ -39,6 +39,7 @@ const { imageSrc, handleImageError } = useImageFallback(() =>
     <!-- Cover Image -->
     <div class="w-28 md:w-48 lg:w-64 shrink-0 overflow-hidden relative self-stretch">
       <img
+        :crossorigin="imageSrc.startsWith('https://cdn.giraffish.top/') ? 'anonymous' : undefined"
         :src="imageSrc"
         :loading="priority ? 'eager' : 'lazy'"
         :fetchpriority="priority ? 'high' : 'auto'"

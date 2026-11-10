@@ -54,7 +54,6 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'restaurant-images-backup-cdn-v2',
-              fetchOptions: { mode: 'cors', credentials: 'omit', cache: 'no-cache' },
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
