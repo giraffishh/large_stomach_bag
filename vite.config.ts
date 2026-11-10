@@ -33,18 +33,19 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['/sw-image-cache-reset.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/prod-files-secure\.s3\.us-west-2\.amazonaws\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'restaurant-images-s3',
+              cacheName: 'restaurant-images-s3-v2',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
               },
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200],
               },
             },
           },
@@ -52,13 +53,14 @@ export default defineConfig({
             urlPattern: /^https:\/\/cdn\.giraffish\.top\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'restaurant-images-backup-cdn',
+              cacheName: 'restaurant-images-backup-cdn-v2',
+              fetchOptions: { mode: 'cors', credentials: 'omit', cache: 'no-cache' },
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200],
               },
             },
           },
@@ -66,13 +68,13 @@ export default defineConfig({
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'images-generic',
+              cacheName: 'images-generic-v2',
               expiration: {
                 maxEntries: 60,
                 maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
               },
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200],
               },
             },
           },
